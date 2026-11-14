@@ -1,0 +1,26 @@
+import "server-only";
+import { after } from "next/server";
+import type { CurrentUser } from "./auth";
+import { ensureSongRhythms } from "./rhythms";
+import { createSong, findBySourceUrl } from "./songs";
+import { SongDraftSchema, type Song } from "@/lib/song";
+
+export type Publish = { ok: true; song: Song } | { ok: false; status: 400 | 403 | 409; error: string; slug?: string };
+
+/** Validates and saves a song for an admin, refusing a source link that was already imported, then lets the AI pick rhythms. */
+export async function publishSong({ user, input }: { user: CurrentUser | null; input: unknown }): Promise<Publish> {
+  if (!user?.isAdmin) return { ok: false, status: 403, error: "Chỉ admin được tạo bài" };
+  const draft = SongDraftSchema.safeParse(input);
+  if (!draft.success) return { ok: false, status: 400, error: draft.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`).join("; ") };
+  if (draft.data.sourceUrl) {
+    const dup = await findBySourceUrl(draft.data.sourceUrl);
+    if (dup) return { ok: false, status: 409, error: `Link này đã được đăng: /bai-hat/${dup.slug}`, slug: dup.slug };
+  }
+
+  const song = await createSong({ draft: draft.data, contributor: user.name, createdBy: user.id });
+  // The song page also asks on first view; starting here means suggestions are usually ready by then.
+  after(() =>
+    ensureSongRhythms(song).catch((err: unknown) => console.error("rhythm suggestion failed", { slug: song.slug, err: err instanceof Error ? err.message : String(err) })),
+  );
+  return { ok: true, song };
+}

@@ -1,103 +1,59 @@
-import Image from "next/image";
+import Link from "next/link";
+import { searchSongs } from "@/db/songs";
+import { chordsInOrder } from "@/lib/chordsheet";
+import { SiteHeader } from "@/components/SiteHeader";
+import { ForestFooter, SkyBand } from "@/components/Scenery";
+import { Mascot } from "@/components/Mascot";
 
-export default function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q = "" } = await searchParams;
+  const needle = q.trim();
+  const songs = (await searchSongs(needle)).map((s) => ({ ...s, chords: chordsInOrder(s.sheet) }));
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <SkyBand>
+        <SiteHeader query={q} />
+        <section className="mx-auto max-w-[1280px] px-4 pt-10 pb-36 sm:px-8">
+          <h1 className="max-w-[720px] font-serif text-4xl leading-tight font-bold text-[#16301f] sm:text-[52px]">Hợp âm chuẩn, thế tay ngay bên cạnh.</h1>
+          <p className="mt-3 max-w-[560px] text-[17px] leading-relaxed font-semibold text-[#2e4a3a]">
+            Không cần kéo xuống tìm thế bấm. Có Mầm dẫn bài, soát lỗi và đổi sang hợp âm dễ đánh hơn.
+          </p>
+        </section>
+      </SkyBand>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <main className="relative mx-auto -mt-20 max-w-[1280px] px-4 sm:px-8">
+        <div className="rounded-[26px] bg-white p-5 shadow-[0_1px_0_#dce8d8,0_12px_32px_rgba(47,107,71,0.10)] sm:p-8">
+          <h2 className="font-serif text-2xl font-bold">{needle ? `Kết quả cho “${q}”` : "Bài hát mới"}</h2>
+          {songs.length === 0 ? (
+            <div className="mt-6 flex items-center gap-3 rounded-2xl bg-moss p-4 text-sm text-ink-soft">
+              <Mascot size={44} />
+              Mầm chưa tìm thấy bài nào. Thử tên khác, hoặc gõ không dấu.
+            </div>
+          ) : (
+            <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {songs.map((s) => (
+                <li key={s.slug}>
+                  <Link href={`/bai-hat/${s.slug}`} className="flex h-full flex-col gap-2 rounded-2xl border border-line p-4 transition hover:border-leaf hover:bg-[#f7faf5]">
+                    <span className="font-serif text-xl font-bold text-ink">{s.title}</span>
+                    <span className="text-sm text-muted">
+                      {[s.artist, `Tone ${s.key}`, s.rhythm].filter(Boolean).join(" · ")}
+                    </span>
+                    <span className="flex flex-wrap gap-1.5">
+                      {s.chords.slice(0, 8).map((c) => (
+                        <span key={c} className="rounded-full bg-moss px-2 py-0.5 text-xs font-extrabold text-leaf">
+                          {c}
+                        </span>
+                      ))}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      <ForestFooter />
+    </>
   );
 }

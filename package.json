@@ -2,26 +2,50 @@
   "name": "2026-11-14-t-mu-n-l-m-a83c5888",
   "version": "0.1.0",
   "private": true,
+  "bin": {
+    "hopamfree": "cli/hopamfree.mts"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "cli": "node cli/hopamfree.mts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.mts"
   },
   "dependencies": {
+    "@tombatossals/chords-db": "^0.5.1",
+    "@workos-inc/authkit-nextjs": "^4.6.3",
+    "@workos-inc/node": "^12.2.0",
+    "cheerio": "^1.2.0",
+    "drizzle-orm": "^0.45.4",
+    "marked": "^16.4.2",
+    "next": "15.5.29",
+    "openai": "^7.56.0",
+    "postgres": "^4.1.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.5.29"
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "15.5.29",
-    "@eslint/eslintrc": "^3"
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.1.0"
+  },
+  "packageManager": "pnpm@12.15.0",
+  "engines": {
+    "node": "24.x"
   }
 }
