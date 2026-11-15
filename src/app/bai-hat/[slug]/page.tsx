@@ -6,7 +6,6 @@ import { getSongRhythms } from "@/db/rhythms";
 import { getSettings } from "@/db/settings";
 import { getSong } from "@/db/songs";
 import { ArtistLinks } from "@/components/ArtistLinks";
-import { CapoBadge } from "@/components/song/CapoBadge";
 import { CapoEditor } from "@/components/song/CapoEditor";
 import { SongView } from "@/components/song/SongView";
 import { ShareSongButton } from "@/components/telegram/ShareSongButton";
@@ -84,9 +83,6 @@ export default async function SongPage({ params, searchParams }: Props) {
                 Sáng tác <strong className="font-bold text-ink">{song.composer}</strong>
               </span>
             )}
-            <span className="rounded-md border border-line-strong bg-surface px-2.5 py-0.5 font-mono text-[13px] font-bold text-ink">Tone {song.key}</span>
-            <CapoBadge songKey={song.key} capo={song.capo} />
-            {song.rhythm && <span className="rounded-md bg-hover px-2.5 py-0.5 text-[13px] font-semibold text-ink">Điệu {song.rhythm}</span>}
             <SetlistToggle slug={song.slug} title={song.title} />
             <ShareSongButton slug={song.slug} title={song.title} />
           </div>

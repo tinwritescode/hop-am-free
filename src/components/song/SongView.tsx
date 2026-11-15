@@ -7,7 +7,7 @@ import type { Settings } from "@/lib/settings";
 import { applyFixes, chordsInOrder, type Line, type LineFix } from "@/lib/chordsheet";
 import { midiOf, rootPitchClass, transposeChord, transposeKey, voicingsFor } from "@/lib/chords";
 import { capoForTranspose, soundingKey, type Capo } from "@/lib/capo";
-import { AI_CAPO_NOTE } from "./CapoBadge";
+import { AI_CAPO_NOTE, CapoBadge } from "./CapoBadge";
 import type { ReviewIssue, Substitution } from "@/lib/ai-schema";
 import { Mascot } from "@/components/Mascot";
 import { ActiveChordCard, ChordGrid, ChordTile, currentVoicing, ListenButton, TourCard, TourCta, VoicingStrip, type RailChord } from "./ChordPanels";
@@ -253,21 +253,30 @@ export function SongView({
           <div className="ml-auto flex flex-wrap items-center gap-2 text-sm font-semibold text-soft">
             <span>Tone</span>
             <span className="inline-flex items-center rounded-full border border-line">
-              <button type="button" aria-label="Hạ nửa cung" onClick={() => {
+              <button
+                type="button"
+                aria-label="Hạ nửa cung"
+                onClick={() => {
                   sfx("tick");
                   setSemitones((s) => s - 1);
-                }} className="size-9 text-lg text-ink">
+                }}
+                className="size-9 text-lg text-ink"
+              >
                 −
               </button>
               <span className="min-w-8 text-center font-extrabold text-ink">{transposeKey({ key: song.key, semitones })}</span>
-              <button type="button" aria-label="Nâng nửa cung" onClick={() => {
+              <button
+                type="button"
+                aria-label="Nâng nửa cung"
+                onClick={() => {
                   sfx("tick");
                   setSemitones((s) => s + 1);
-                }} className="size-9 text-lg text-ink">
+                }}
+                className="size-9 text-lg text-ink"
+              >
                 +
               </button>
             </span>
-            {song.capo && semitones !== 0 && <TransposedCapo songKey={song.key} capo={song.capo} semitones={semitones} />}
             <button
               type="button"
               aria-pressed={voiceOpen}
@@ -278,16 +287,24 @@ export function SongView({
               🎤 Hợp giọng
             </button>
             <span className="inline-flex items-center rounded-full border border-line">
-              <button type="button" aria-label="Thu nhỏ chữ" onClick={() => {
+              <button
+                type="button"
+                aria-label="Thu nhỏ chữ"
+                onClick={() => {
                   sfx("tick");
                   update({ fontSize: Math.max(14, fontSize - 1) });
-                }} className="size-9 text-sm font-extrabold text-ink">
+                }}
+                className="size-9 text-sm font-extrabold text-ink">
                 A−
               </button>
-              <button type="button" aria-label="Phóng to chữ" onClick={() => {
+              <button
+                type="button"
+                aria-label="Phóng to chữ"
+                onClick={() => {
                   sfx("tick");
                   update({ fontSize: Math.min(28, fontSize + 1) });
-                }} className="size-9 text-base font-extrabold text-ink">
+                }}
+                className="size-9 text-base font-extrabold text-ink">
                 A+
               </button>
             </span>
@@ -386,6 +403,13 @@ export function SongView({
           </MamBanner>
         )}
         {showIssues && review.status === "ready" && review.data.issues.length === 0 && <MamBanner>Mầm không thấy lỗi nào trong bản này.</MamBanner>}
+
+        {/* What a player sets up before the first chord, right where they start reading. Follows the transpose. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 pt-5 text-[15px] text-soft sm:px-8 lg:px-6">
+          <span className="rounded-md border border-line-strong bg-surface px-3 py-1 font-mono font-bold text-ink">Tone {transposeKey({ key: song.key, semitones })}</span>
+          {semitones === 0 ? <CapoBadge songKey={song.key} capo={song.capo} /> : song.capo && <TransposedCapo songKey={song.key} capo={song.capo} semitones={semitones} />}
+          {song.rhythm && <span className="rounded-md bg-hover px-3 py-1 font-semibold text-ink">Điệu {song.rhythm}</span>}
+        </div>
 
         {/* Lyrics: one column on mobile; on desktop as many ~18em columns as fit (font size included), sections kept whole. */}
         <div
@@ -587,12 +611,12 @@ function TransposedCapo({ songKey, capo, semitones }: { songKey: string; capo: C
   const ai = capo.source === "ai" ? ` (${AI_CAPO_NOTE})` : "";
   if (fret === null)
     return (
-      <span role="status" title={`Không có capo 0–11 nào giữ được tone ${key}${ai}`} className="text-[13px] text-soft">
+      <span role="status" title={`Không có capo 0–11 nào giữ được tone ${key}${ai}`} >
         Capo không giữ được tone {key}
       </span>
     );
   return (
-    <span role="status" title={`Kẹp capo ${fret} để vẫn nghe như ${key}${ai}`} className="rounded-full bg-hover px-3 py-1.5 text-[13px] font-bold text-ink">
+    <span role="status" title={`Kẹp capo ${fret} để vẫn nghe như ${key}${ai}`} className="rounded-md bg-hover px-3 py-1 font-bold text-ink">
       {fret === 0 ? "Bỏ capo" : `Capo ${fret}`} · giữ tone {key}
       {capo.source === "ai" && <span className="font-semibold text-warn"> · AI đoán</span>}
     </span>
