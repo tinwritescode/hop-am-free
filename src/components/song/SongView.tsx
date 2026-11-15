@@ -5,12 +5,14 @@ import type { Song } from "@/lib/song";
 import type { SongRhythm } from "@/lib/rhythm";
 import type { Settings } from "@/lib/settings";
 import { applyFixes, chordsInOrder, type Line, type LineFix } from "@/lib/chordsheet";
+import { chordSteps } from "@/lib/keyboard-guitar";
 import { midiOf, transposeChord, transposeKey, voicingsFor } from "@/lib/chords";
 import { capoForTranspose, soundingKey, type Capo } from "@/lib/capo";
 import { AI_CAPO_NOTE } from "./CapoBadge";
 import type { ReviewIssue, Substitution } from "@/lib/ai-schema";
 import { Mascot } from "@/components/Mascot";
 import { ActiveChordCard, ChordGrid, ChordTile, currentVoicing, ListenButton, TourCard, TourCta, VoicingStrip, type RailChord } from "./ChordPanels";
+import { KeyboardGuitar } from "./KeyboardGuitar";
 import { RhythmPanel } from "./RhythmPanel";
 import { useAi } from "./useAi";
 import { useSettings } from "./useSettings";
@@ -80,6 +82,8 @@ export function SongView({ song, rhythms, savedSettings, signedIn }: { song: Son
   const [fixes, setFixes] = useState<Record<number, LineFix>>({});
   const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const [autoScroll, setAutoScroll] = useState(false);
+  const [guitarOn, setGuitarOn] = useState(false);
+  const [step, setStep] = useState<number | null>(null);
   const stopScroll = useMemo(() => () => setAutoScroll(false), []);
   useAutoScroll(autoScroll, stopScroll);
   const lyricsRef = useRef<HTMLDivElement>(null);
@@ -88,6 +92,11 @@ export function SongView({ song, rhythms, savedSettings, signedIn }: { song: Son
   const fits = useFitsScreen(lyricsRef);
 
   const sheet = useMemo(() => applyFixes(song.sheet, fixes), [song.sheet, fixes]);
+  const steps = useMemo(() => chordSteps(sheet), [sheet]);
+  const cursor = guitarOn && step !== null ? steps[step] : undefined;
+  useEffect(() => {
+    if (step !== null) lyricsRef.current?.querySelector("[data-cursor]")?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [step]);
   const modeState = mode === "orig" ? null : states[mode];
   const subs = useMemo(
     () => new Map<string, Substitution>(modeState?.status === "ready" ? modeState.data.subs.map((s) => [s.from, s]) : []),
@@ -144,8 +153,15 @@ export function SongView({ song, rhythms, savedSettings, signedIn }: { song: Son
     setShowIssues((v) => !v);
     void request("review");
   };
+  const goChordStep = (i: number) => {
+    const target = steps[i];
+    if (!target) return;
+    setStep(i);
+    setPicked(display(target.chord));
+  };
   const pickVoicing = (i: number) => active && setVoicingIndex((v) => ({ ...v, [active.name]: i }));
   const activeVoicing = active ? currentVoicing(active) : null;
+  const capo = song.capo?.fret ?? 0;
 
   const chordStyle = (orig: string, name: string) => {
     if (active?.name === name) return "bg-link text-surface";
@@ -200,6 +216,17 @@ export function SongView({ song, rhythms, savedSettings, signedIn }: { song: Son
           <button type="button" onClick={startTour} className="inline-flex h-11 items-center rounded-full bg-bar px-4 text-sm font-extrabold text-bar-ink lg:hidden">
             Mầm dẫn bài
           </button>
+          <button
+            type="button"
+            aria-pressed={guitarOn}
+            onClick={(e) => {
+              e.currentTarget.blur(); // Space strums from now on; it must not press this button again
+              setGuitarOn((v) => !v);
+            }}
+            className={`inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-extrabold ${guitarOn ? "border-link bg-link text-surface" : "border-line-strong bg-surface text-ink"}`}
+          >
+            🎸 {guitarOn ? "Tắt đàn phím" : "Đàn bằng phím"}
+          </button>
           <div className="ml-auto flex flex-wrap items-center gap-2 text-sm font-semibold text-soft">
             <span>Tone</span>
             <span className="inline-flex items-center rounded-full border border-line">
@@ -246,7 +273,9 @@ export function SongView({ song, rhythms, savedSettings, signedIn }: { song: Son
           </div>
         </div>
 
-        <RhythmPanel slug={song.slug} initial={rhythms} chordName={active?.name ?? ""} midi={activeVoicing ? midiOf(activeVoicing) : null} />
+        {guitarOn && <KeyboardGuitar chords={rail} active={active} capo={capo} onPick={setPicked} stepChords={steps.map((st) => display(st.chord))} step={step} onStep={goChordStep} />}
+
+        <RhythmPanel slug={song.slug} initial={rhythms} chordName={active?.name ?? ""} midi={activeVoicing ? midiOf({ position: activeVoicing, capo }) : null} />
 
         {/* Mầm status banners */}
         {modeState && (
@@ -303,7 +332,13 @@ export function SongView({ song, rhythms, savedSettings, signedIn }: { song: Son
                       fontSize={fontSize}
                       label={display}
                       chipStyle={chordStyle}
-                      onPick={(orig) => setPicked(display(orig))}
+                      cursor={cursor?.line === line.index ? cursor.token : null}
+                      onPick={(orig, token) => {
+                        setPicked(display(orig));
+                        // Clicking a chord in the lyrics while playing starts the walk from there.
+                        const i = steps.findIndex((st) => st.line === line.index && st.token === token);
+                        if (guitarOn && i >= 0) setStep(i);
+                      }}
                     />
                     {issues.map((issue) => {
                       const dismiss = () => setDismissed((d) => new Set(d).add(issueKey(issue)));
@@ -342,7 +377,7 @@ export function SongView({ song, rhythms, savedSettings, signedIn }: { song: Son
         className="sticky top-[calc(1rem+var(--app-inset-top,0px))] hidden max-h-[calc(100dvh-2rem)] w-[280px] shrink-0 flex-col gap-4 overflow-y-auto overscroll-contain lg:flex 2xl:w-[320px]"
       >
         {tourOn ? tourCard(false) : <TourCta onStart={startTour} />}
-        {active && <ActiveChordCard chord={active} count={counts.get(active.name) ?? 0} onPickVoicing={pickVoicing} />}
+        {active && <ActiveChordCard chord={active} count={counts.get(active.name) ?? 0} capo={capo} onPickVoicing={pickVoicing} />}
         <ChordGrid chords={rail} active={active?.name ?? ""} onPick={setPicked} />
       </aside>
 
@@ -354,7 +389,7 @@ export function SongView({ song, rhythms, savedSettings, signedIn }: { song: Son
           <section aria-label={`Thế bấm ${active.name}`} className="flex flex-col gap-1.5 rounded-2xl bg-hover p-2.5">
             <div className="flex items-center gap-2">
               <strong className="flex-1 font-serif text-xl font-normal text-link">{active.name}</strong>
-              <ListenButton position={activeVoicing} />
+              <ListenButton position={activeVoicing} capo={capo} />
               <button type="button" onClick={() => setPicked(null)} aria-label="Đóng thế bấm" className="size-11 rounded-full border border-line-strong bg-surface text-sm">
                 ✕
               </button>
@@ -386,6 +421,7 @@ function LyricLine({
   fontSize,
   label,
   chipStyle,
+  cursor,
   onPick,
 }: {
   line: Line;
@@ -393,14 +429,16 @@ function LyricLine({
   fontSize: number;
   label: (orig: string) => string;
   chipStyle: (orig: string, name: string) => string;
-  onPick: (orig: string) => void;
+  cursor: number | null;
+  onPick: (orig: string, token: number) => void;
 }) {
-  const chip = (orig: string, inline: boolean) => (
+  const chip = (orig: string, inline: boolean, token: number) => (
     <button
       type="button"
-      onClick={() => onPick(orig)}
+      data-cursor={cursor === token || undefined}
+      onClick={() => onPick(orig, token)}
       style={inline ? { fontSize: Math.round(fontSize * 0.88) } : { height: Math.round(fontSize * 1.4), fontSize: Math.round(fontSize * 0.88) }}
-      className={`rounded-full px-[7px] leading-none font-extrabold whitespace-nowrap ${inline ? "mx-0.5 py-[3px] align-[0.1em]" : "-ml-[7px]"} ${chipStyle(orig, label(orig))}`}
+      className={`rounded-full px-[7px] leading-none font-extrabold whitespace-nowrap ${inline ? "mx-0.5 py-[3px] align-[0.1em]" : "-ml-[7px]"} ${chipStyle(orig, label(orig))} ${cursor === token ? "ring-2 ring-accent ring-offset-2 ring-offset-surface" : ""}`}
     >
       {inline ? (
         <>
@@ -423,7 +461,7 @@ function LyricLine({
       <p style={{ fontSize }} className="py-[3px] leading-[1.9]">
         {line.tokens.map((t, i) => (
           <span key={i}>
-            {t.chord && chip(t.chord, true)}
+            {t.chord && chip(t.chord, true, i)}
             {t.text}{" "}
           </span>
         ))}
@@ -434,7 +472,7 @@ function LyricLine({
     <div className="flex flex-wrap items-end gap-x-[0.3em] gap-y-0.5 py-[3px]">
       {line.tokens.map((t, i) => (
         <span key={i} className="inline-flex flex-col items-start">
-          {line.hasChords && (t.chord ? chip(t.chord, false) : <span style={{ height: Math.round(fontSize * 1.4) }} />)}
+          {line.hasChords && (t.chord ? chip(t.chord, false, i) : <span style={{ height: Math.round(fontSize * 1.4) }} />)}
           {!line.chordOnly && (
             <span style={{ fontSize }} className="leading-normal whitespace-nowrap">
               {t.text}

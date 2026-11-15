@@ -1,19 +1,33 @@
 import { countLabels, type RhythmPattern, type Stroke } from "./rhythm";
 
 import { audioContext as audio, releaseAudio, unlockAudio } from "./audio-unlock";
+import { pluckSamples, strumOrder, type StrumDir } from "./keyboard-guitar";
+
+const RING_SECONDS = 3;
+const strings = new Map<number, AudioBuffer>();
+
+/** The recorded sound of one plucked string, made once per note. */
+function stringBuffer(note: number): AudioBuffer {
+  const a = audio();
+  let buf = strings.get(note);
+  if (!buf) {
+    buf = a.createBuffer(1, Math.round(a.sampleRate * RING_SECONDS), a.sampleRate);
+    buf.copyToChannel(pluckSamples({ midi: note, sampleRate: a.sampleRate, seconds: RING_SECONDS }), 0);
+    strings.set(note, buf);
+  }
+  return buf;
+}
 
 function pluck({ out, note, t, gain, decay }: { out: AudioNode; note: number; t: number; gain: number; decay: number }) {
   const a = audio();
-  const osc = a.createOscillator();
+  const src = a.createBufferSource();
   const env = a.createGain();
-  osc.type = "triangle";
-  osc.frequency.value = 440 * 2 ** ((note - 69) / 12);
-  env.gain.setValueAtTime(0, t);
-  env.gain.linearRampToValueAtTime(gain, t + 0.008);
-  env.gain.exponentialRampToValueAtTime(0.0001, t + decay);
-  osc.connect(env).connect(out);
-  osc.start(t);
-  osc.stop(t + decay + 0.05);
+  src.buffer = stringBuffer(note);
+  env.gain.setValueAtTime(gain, t);
+  env.gain.exponentialRampToValueAtTime(0.0001, t + Math.min(decay, RING_SECONDS));
+  src.connect(env).connect(out);
+  src.start(t);
+  src.stop(t + Math.min(decay, RING_SECONDS) + 0.05);
 }
 
 function slap({ out, t }: { out: AudioNode; t: number }) {
@@ -33,6 +47,23 @@ function slap({ out, t }: { out: AudioNode; t: number }) {
 export function strum(midi: number[]): void {
   const a = unlockAudio({ holdSeconds: 2.5 });
   midi.forEach((note, i) => pluck({ out: a.destination, note, t: a.currentTime + i * 0.035, gain: 0.16, decay: 1.8 }));
+}
+
+let ringing: GainNode | null = null;
+
+/** One stroke on the keyboard guitar. Like a strumming hand, it first damps the strings still ringing from the last one. */
+export function strumStroke({ midi, dir }: { midi: number[]; dir: StrumDir }): void {
+  const a = unlockAudio({ holdSeconds: RING_SECONDS });
+  const t = a.currentTime;
+  const last = ringing;
+  if (last) {
+    last.gain.setTargetAtTime(0, t, 0.015);
+    setTimeout(() => last.disconnect(), 200);
+  }
+  const out = a.createGain();
+  out.connect(a.destination);
+  ringing = out;
+  strumOrder({ midi, dir }).forEach((note, i) => pluck({ out, note, t: t + i * 0.012, gain: dir === "down" ? 0.16 : 0.12, decay: RING_SECONDS }));
 }
 
 function playStroke({ out, stroke, midi, t, decay }: { out: AudioNode; stroke: Stroke; midi: number[]; t: number; decay: number }) {

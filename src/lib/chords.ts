@@ -103,8 +103,9 @@ export const DIFFICULTY_LABEL: Record<Difficulty, string> = { easy: "Dễ", medi
 const absFret = (p: Position, f: number) => (f <= 0 ? f : f + p.baseFret - 1);
 const OPEN_STRING_MIDI = [40, 45, 50, 55, 59, 64]; // standard tuning E A D G B E
 
-export function midiOf(p: Position): number[] {
-  return p.frets.flatMap((f, i) => (f < 0 ? [] : [OPEN_STRING_MIDI[i] + absFret(p, f)]));
+/** The notes a shape sounds. Shapes are read relative to the capo, which raises every string by its fret. */
+export function midiOf({ position: p, capo }: { position: Position; capo: number }): number[] {
+  return p.frets.flatMap((f, i) => (f < 0 ? [] : [OPEN_STRING_MIDI[i] + capo + absFret(p, f)]));
 }
 
 export function tabOf(p: Position): string {

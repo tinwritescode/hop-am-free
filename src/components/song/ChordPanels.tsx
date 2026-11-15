@@ -16,7 +16,7 @@ export function currentVoicing(c: RailChord): Position | null {
   return c.voicings.length ? c.voicings[c.voicingIndex % c.voicings.length] : null;
 }
 
-export function ActiveChordCard({ chord, count, onPickVoicing }: { chord: RailChord; count: number; onPickVoicing: (i: number) => void }) {
+export function ActiveChordCard({ chord, count, capo, onPickVoicing }: { chord: RailChord; count: number; capo: number; onPickVoicing: (i: number) => void }) {
   const position = currentVoicing(chord);
   const level = position ? difficultyOf(position) : null;
   return (
@@ -45,18 +45,18 @@ export function ActiveChordCard({ chord, count, onPickVoicing }: { chord: RailCh
           Mầm đổi từ <strong>{chord.sub.from}</strong>: {chord.sub.reason}
         </p>
       )}
-      <ListenButton position={position} />
+      <ListenButton position={position} capo={capo} />
       <VoicingStrip chord={chord} onPick={onPickVoicing} />
     </section>
   );
 }
 
-export function ListenButton({ position }: { position: Position | null }) {
+export function ListenButton({ position, capo }: { position: Position | null; capo: number }) {
   return (
     <button
       type="button"
       disabled={!position}
-      onClick={() => position && strum(midiOf(position))}
+      onClick={() => position && strum(midiOf({ position, capo }))}
       className="inline-flex h-[42px] items-center justify-center gap-1.5 rounded-full border border-line-strong bg-surface px-4 text-sm font-bold disabled:opacity-40"
     >
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

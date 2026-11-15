@@ -38,8 +38,12 @@ describe("midiOf / tabOf / handHint", () => {
   const highBarre = { frets: [1, 3, 3, 2, 1, 1], barres: [1], baseFret: 4 };
 
   it("converts relative frets to absolute notes and tab", () => {
-    expect(midiOf({ frets: [-1, 3, 2, 0, 1, 0], barres: [], baseFret: 1 })).toEqual([48, 52, 55, 60, 64]);
+    expect(midiOf({ position: { frets: [-1, 3, 2, 0, 1, 0], barres: [], baseFret: 1 }, capo: 0 })).toEqual([48, 52, 55, 60, 64]);
     expect(tabOf(highBarre)).toBe("4 6 6 5 4 4");
+  });
+
+  it("sounds a capo's frets higher than the shape, open strings included", () => {
+    expect(midiOf({ position: { frets: [-1, 3, 2, 0, 1, 0], barres: [], baseFret: 1 }, capo: 5 })).toEqual([53, 57, 60, 65, 69]);
   });
 
   it("describes the hand shape", () => {
