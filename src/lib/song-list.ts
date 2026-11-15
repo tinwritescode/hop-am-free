@@ -78,6 +78,24 @@ export function indexableListHref(query: ListQuery): string | null {
   return narrow ? null : listHref(query);
 }
 
+/** The page title for a list view (the layout adds the site name). */
+export function listTitle({ q, artist, rhythm }: Pick<ListQuery, "q" | "artist" | "rhythm">): string {
+  return q ? `Tìm “${q}”` : artist ? `Hợp âm các bài của ${artist}` : rhythm ? `Hợp âm các bài điệu ${rhythm}` : "Tất cả bài hát";
+}
+
+/**
+ * Where a clicked link should go without asking the server (path and query), or null to let it navigate normally.
+ * The browser already holds every song of the current search, so only a link to the list with the same search
+ * qualifies; a new search, another page or a same-page anchor does not.
+ */
+export function inPageListHref({ href, current }: { href: string; current: string }): string | null {
+  const to = new URL(href, current);
+  const from = new URL(current);
+  if (to.origin !== from.origin || to.pathname !== LIST_PATH || to.hash) return null;
+  const search = (u: URL) => (u.searchParams.get(PARAM.q) ?? "").trim();
+  return search(to) === search(from) ? `${to.pathname}${to.search}` : null;
+}
+
 /** Known chords as they go into `?hop-am=`: sorted, so the same set is always the same link. */
 export function knownParam(known: ReadonlySet<string>): string[] {
   return [...known].sort();

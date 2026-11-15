@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseChordSheet } from "./chordsheet";
 import { summarize } from "./catalog";
-import { clearedHref, DEFAULT_QUERY, indexableListHref, isSongPath, legacySearchRedirect, listHref, listSongs, PAGE_SIZE, pageItems, parseListQuery, type ListQuery } from "./song-list";
+import { clearedHref, DEFAULT_QUERY, indexableListHref, inPageListHref, listTitle, isSongPath, legacySearchRedirect, listHref, listSongs, PAGE_SIZE, pageItems, parseListQuery, type ListQuery } from "./song-list";
 
 const song = ({ slug, artist = "A", key = "C", rhythm = "Ballad", raw = "[C] la" }: { slug: string; artist?: string; key?: string; rhythm?: string; raw?: string }) =>
   summarize({ slug, title: slug, artist, key, rhythm, sheet: parseChordSheet(raw) });
@@ -194,5 +194,32 @@ describe("indexableListHref", () => {
     ["artist and rhythm together", { artist: "Ngọt", rhythm: "Ballad" }],
   ])("%s is not", (_, patch) => {
     expect(indexableListHref({ ...DEFAULT_QUERY, ...patch })).toBeNull();
+  });
+});
+
+describe("inPageListHref", () => {
+  const current = "https://x.vn/bai-hat?ca-si=A&sap-xep=a-z";
+  it("keeps list links that only change filters, sort or page in the browser", () => {
+    expect(inPageListHref({ href: "https://x.vn/bai-hat?ca-si=A&trang=2", current })).toBe("/bai-hat?ca-si=A&trang=2");
+    expect(inPageListHref({ href: "https://x.vn/bai-hat", current })).toBe("/bai-hat");
+  });
+  it("leaves a changed search to the server, which runs it", () => {
+    expect(inPageListHref({ href: "https://x.vn/bai-hat?q=mua", current })).toBeNull();
+    expect(inPageListHref({ href: "https://x.vn/bai-hat", current: "https://x.vn/bai-hat?q=mua" })).toBeNull();
+    expect(inPageListHref({ href: "https://x.vn/bai-hat?q=mua&trang=2", current: "https://x.vn/bai-hat?q=+mua" })).toBe("/bai-hat?q=mua&trang=2");
+  });
+  it("leaves other pages, other sites and same-page anchors alone", () => {
+    expect(inPageListHref({ href: "https://x.vn/bai-hat/nang-tho", current })).toBeNull();
+    expect(inPageListHref({ href: "https://y.vn/bai-hat?trang=2", current })).toBeNull();
+    expect(inPageListHref({ href: "https://x.vn/bai-hat?ca-si=A&sap-xep=a-z#bo-loc", current })).toBeNull();
+  });
+});
+
+describe("listTitle", () => {
+  it("names the view by search, then artist, then rhythm", () => {
+    expect(listTitle({ ...DEFAULT_QUERY, q: "mưa", artist: "A" })).toBe("Tìm “mưa”");
+    expect(listTitle({ ...DEFAULT_QUERY, artist: "A", rhythm: "Ballad" })).toBe("Hợp âm các bài của A");
+    expect(listTitle({ ...DEFAULT_QUERY, rhythm: "Ballad" })).toBe("Hợp âm các bài điệu Ballad");
+    expect(listTitle(DEFAULT_QUERY)).toBe("Tất cả bài hát");
   });
 });
