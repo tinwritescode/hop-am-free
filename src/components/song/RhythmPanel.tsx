@@ -12,14 +12,14 @@ const RhythmsResponse = z.union([
 ]);
 
 const STROKE_VIEW: Record<Stroke, { glyph: string; title: string; tone: string }> = {
-  D: { glyph: "↓", title: "Quạt xuống", tone: "bg-leaf text-white" },
-  U: { glyph: "↑", title: "Quạt lên", tone: "bg-sprout text-sprout-ink" },
-  B: { glyph: "B", title: "Ngón cái gảy bass", tone: "bg-forest text-white" },
-  X: { glyph: "✕", title: "Chặn tiếng", tone: "bg-clay text-white" },
-  "1": { glyph: "1", title: "Móc dây 1", tone: "bg-sun text-sun-ink" },
-  "2": { glyph: "2", title: "Móc dây 2", tone: "bg-sun text-sun-ink" },
-  "3": { glyph: "3", title: "Móc dây 3", tone: "bg-sun text-sun-ink" },
-  "-": { glyph: "·", title: "Nghỉ", tone: "bg-[#f1f5ef] text-muted" },
+  D: { glyph: "↓", title: "Quạt xuống", tone: "bg-link text-surface" },
+  U: { glyph: "↑", title: "Quạt lên", tone: "bg-hover text-link ring-1 ring-link ring-inset" },
+  B: { glyph: "B", title: "Ngón cái gảy bass", tone: "bg-bar text-bar-ink" },
+  X: { glyph: "✕", title: "Chặn tiếng", tone: "bg-warn text-surface" },
+  "1": { glyph: "1", title: "Móc dây 1", tone: "bg-accent text-on-accent" },
+  "2": { glyph: "2", title: "Móc dây 2", tone: "bg-accent text-on-accent" },
+  "3": { glyph: "3", title: "Móc dây 3", tone: "bg-accent text-on-accent" },
+  "-": { glyph: "·", title: "Nghỉ", tone: "bg-bg text-soft" },
 };
 
 type Load = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; rhythms: SongRhythm[] };
@@ -49,12 +49,12 @@ export function RhythmPanel({ slug, initial, chordName, midi }: { slug: string; 
   const current = rhythms.find((r) => r.slug === open) ?? null;
 
   return (
-    <div className="border-b border-[#e3ede0] px-5 py-3">
+    <div className="border-b border-line px-5 py-3">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm font-extrabold text-leaf">Điệu gợi ý</span>
-        {load.status === "loading" && <span className="text-sm text-muted">Mầm đang chọn điệu hợp với bài…</span>}
+        <span className="text-sm font-extrabold text-link">Điệu gợi ý</span>
+        {load.status === "loading" && <span className="text-sm text-soft">Mầm đang chọn điệu hợp với bài…</span>}
         {load.status === "error" && (
-          <span className="text-sm text-clay-ink">
+          <span className="text-sm text-warn">
             {load.message}{" "}
             <button type="button" onClick={() => void fetchRhythms()} className="font-extrabold underline">
               Thử lại
@@ -67,9 +67,9 @@ export function RhythmPanel({ slug, initial, chordName, midi }: { slug: string; 
             type="button"
             aria-expanded={open === r.slug}
             onClick={() => setOpen((o) => (o === r.slug ? null : r.slug))}
-            className={`h-9 rounded-full border px-3.5 text-sm font-extrabold ${open === r.slug ? "border-leaf bg-moss text-sprout-ink" : "border-line bg-white text-ink"}`}
+            className={`h-9 rounded-full border px-3.5 text-sm font-extrabold ${open === r.slug ? "border-link bg-hover text-link" : "border-line-strong bg-surface text-ink"}`}
           >
-            {r.name} <span className="font-semibold text-muted">{r.timeSignature}</span>
+            {r.name} <span className="font-semibold text-soft">{r.timeSignature}</span>
           </button>
         ))}
       </div>
@@ -106,21 +106,21 @@ function RhythmCard({ rhythm, chordName, midi }: { rhythm: SongRhythm; chordName
   };
 
   return (
-    <section aria-label={`Cách đánh điệu ${rhythm.name}`} className="mt-3 flex flex-col gap-3 rounded-[20px] bg-[#f7faf5] p-4">
+    <section aria-label={`Cách đánh điệu ${rhythm.name}`} className="mt-3 flex flex-col gap-3 rounded-lg bg-hover p-4">
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h3 className="font-serif text-xl font-bold">{rhythm.name}</h3>
-        <span className="text-sm font-semibold text-muted">
+        <h3 className="font-serif text-xl font-normal">{rhythm.name}</h3>
+        <span className="text-sm font-semibold text-soft">
           Nhịp {rhythm.timeSignature} · khoảng {rhythm.bpm} BPM
         </span>
       </div>
-      <p className="flex items-start gap-2 text-sm leading-relaxed text-ink-soft">
+      <p className="flex items-start gap-2 text-sm leading-relaxed text-soft">
         <Mascot size={28} className="shrink-0" />
         <span>
-          <strong className="text-sprout-ink">Hợp bài vì:</strong> {rhythm.reason} {rhythm.feel}
+          <strong className="text-link">Hợp bài vì:</strong> {rhythm.reason} {rhythm.feel}
         </span>
       </p>
-      <div className="overflow-x-auto pb-1">
-        <ol className="flex gap-1" aria-label="Một ô nhịp">
+      <div className="-m-1 overflow-x-auto p-1.5">
+        <ol className="flex gap-2" aria-label="Một ô nhịp">
           {rhythm.steps.map((s, i) => {
             const view = STROKE_VIEW[s];
             return (
@@ -128,18 +128,18 @@ function RhythmCard({ rhythm, chordName, midi }: { rhythm: SongRhythm; chordName
                 <span
                   title={view.title}
                   aria-label={`${labels[i]}: ${view.title}`}
-                  className={`flex size-9 items-center justify-center rounded-xl text-lg font-extrabold ${view.tone} ${step === i ? "ring-4 ring-sun" : ""}`}
+                  className={`flex size-9 items-center justify-center rounded-xl text-lg font-extrabold ${view.tone} ${step === i ? "ring-4 ring-accent" : ""}`}
                 >
                   {view.glyph}
                 </span>
-                <span className={`text-xs font-bold ${/^\d+$/.test(labels[i]) ? "text-ink" : "text-muted"}`}>{labels[i]}</span>
+                <span className={`text-xs font-bold ${/^\d+$/.test(labels[i]) ? "text-ink" : "text-soft"}`}>{labels[i]}</span>
               </li>
             );
           })}
         </ol>
       </div>
       <p className="text-sm leading-relaxed">{rhythm.howTo}</p>
-      <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted">
+      <p className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-soft">
         {Object.entries(STROKE_VIEW)
           .filter(([k]) => rhythm.steps.some((s) => s === k))
           .map(([k, v]) => (
@@ -152,7 +152,7 @@ function RhythmCard({ rhythm, chordName, midi }: { rhythm: SongRhythm; chordName
         type="button"
         disabled={!midi}
         onClick={step === null ? play : stop}
-        className="h-10 self-start rounded-full bg-forest px-4 text-sm font-extrabold text-white disabled:opacity-40"
+        className="fx h-11 self-start rounded-full bg-bar px-4 text-sm font-extrabold text-bar-ink disabled:opacity-40"
       >
         {step === null ? `Nghe thử với ${chordName}` : "Dừng"}
       </button>

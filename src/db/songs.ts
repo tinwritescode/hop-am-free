@@ -3,13 +3,15 @@ import { cache } from "react";
 import { desc, eq } from "drizzle-orm";
 import { db } from ".";
 import { songs } from "./schema";
-import { slugify, toSong, type Song, type SongDraft } from "@/lib/song";
+import { slugify, songColumns, toSong, type Song, type SongDraft } from "@/lib/song";
 import { chordsInOrder } from "@/lib/chordsheet";
 import { fold } from "@/lib/text";
+import { summarize, type SongSummary } from "@/lib/catalog";
+import { cachedCatalog, cachedSongRow } from "./read-cache";
 
-/** Deduped per request, so metadata and the page share one query. */
+/** Cached across requests (see read-cache.ts) and deduped per request, so metadata and the page share one read. */
 export const getSong = cache(async (slug: string): Promise<Song | null> => {
-  const [row] = await db().select().from(songs).where(eq(songs.slug, slug));
+  const [row] = await cachedSongRow({ slug, read: () => db().select().from(songs).where(eq(songs.slug, slug)) });
   return row ? toSong(row) : null;
 });
 
@@ -17,10 +19,14 @@ export const getSong = cache(async (slug: string): Promise<Song | null> => {
 /** Newest first. Matches title/artist/composer without diacritics, or an exact chord name; empty query returns all. */
 export async function searchSongs(query: string): Promise<Song[]> {
   const needle = fold(query.trim());
-  const all = (await db().select().from(songs).orderBy(desc(songs.createdAt))).map(toSong);
+  // shortcut: the cached raw rows are ~0.9MB for 437 songs; past ~2MB (about 900 songs) Next stops caching them, so cache summaries then.
+  const all = (await cachedCatalog(() => db().select().from(songs).orderBy(desc(songs.createdAt)))).map(toSong);
   if (!needle) return all;
   return all.filter((s) => fold(`${s.title} ${s.artist} ${s.composer}`).includes(needle) || chordsInOrder(s.sheet).some((c) => fold(c) === needle));
 }
+
+/** searchSongs as list summaries (what the home page, /bai-hat and /ca-si show). Deduped per request. */
+export const searchSummaries = cache(async (query: string): Promise<SongSummary[]> => (await searchSongs(query)).map(summarize));
 
 export async function findBySourceUrl(url: string): Promise<{ slug: string } | null> {
   const [row] = await db().select({ slug: songs.slug }).from(songs).where(eq(songs.sourceUrl, url));
@@ -33,7 +39,7 @@ export async function createSong({ draft, contributor, createdBy }: { draft: Son
     const slug = n === 1 ? base : `${base}-${n}`;
     const [row] = await db()
       .insert(songs)
-      .values({ ...draft, slug, contributor, createdBy })
+      .values({ ...songColumns(draft), slug, contributor, createdBy })
       .onConflictDoNothing({ target: songs.slug })
       .returning();
     if (row) return toSong(row);

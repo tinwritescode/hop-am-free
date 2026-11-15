@@ -1,59 +1,308 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-nunito), system-ui, sans-serif;
-  --font-serif: var(--font-lora), Georgia, serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
-}
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-serif: var(--font-display), Georgia, serif;
+  --font-mono: var(--font-code), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-@theme {
-  --color-bg: #f4f8f1;
-  --color-ink: #1b2e24;
-  --color-ink-soft: #34483b;
-  --color-muted: #52675a;
-  --color-line: #dce8d8;
-  --color-leaf: #2f6b47;
-  --color-forest: #1f4d3a;
-  --color-forest-soft: #2c5f49;
-  --color-mist: #cfe3d3;
-  --color-moss: #eaf5e5;
-  --color-sprout: #ddf0d5;
-  --color-sprout-ink: #1f5135;
-  --color-sun: #f6d365;
-  --color-sun-ink: #3d3008;
-  --color-clay: #9a3f12;
-  --color-clay-ink: #7a3210;
-  --color-clay-bg: #fdf1e7;
-  --color-clay-line: #f0cdb2;
+  /* Skin tokens (see src/themes): set on <html data-skin data-mode>, read here as Tailwind colours. */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-soft: var(--soft);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-link: var(--link);
+  --color-hover: var(--hover);
+  --color-bar: var(--bar);
+  --color-bar-ink: var(--bar-ink);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-field: var(--field);
+  --color-field-ink: var(--field-ink);
+  --color-glow: var(--glow);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
 }
 
 body {
-  background: var(--color-bg);
-  color: var(--color-ink);
+  background: var(--bg);
+  color: var(--ink);
+  cursor: var(--cursor, auto);
+  padding-left: var(--app-inset-left, 0px);
+  padding-right: var(--app-inset-right, 0px);
 }
 
-button {
+/*
+ * Room to keep clear of the device's and Telegram's controls, read as var(--app-inset-*, 0px). Unset (so 0) in a browser.
+ * In a Telegram Mini App (html[data-tg], set by TelegramBridge) they come from the insets telegram-web-app.js publishes:
+ * the device safe area plus Telegram's own controls, which overlap the page in fullscreen mode.
+ */
+:root[data-tg] {
+  --app-inset-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
+  --app-inset-bottom: calc(var(--tg-safe-area-inset-bottom, 0px) + var(--tg-content-safe-area-inset-bottom, 0px));
+  --app-inset-left: calc(var(--tg-safe-area-inset-left, 0px) + var(--tg-content-safe-area-inset-left, 0px));
+  --app-inset-right: calc(var(--tg-safe-area-inset-right, 0px) + var(--tg-content-safe-area-inset-right, 0px));
+}
+
+a,
+button,
+select,
+summary,
+label:has(input[type="checkbox"]),
+input[type="checkbox"] {
   cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+input:not([type="checkbox"]),
+textarea {
+  cursor: text;
+}
+input[type="checkbox"] {
+  accent-color: var(--check);
+}
+
+/* In the base layer, so a utility class on a link (text-soft, text-ink…) wins; unlayered, this rule beat every utility. */
+@layer base {
+  a {
+    color: var(--link);
+  }
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-leaf);
+  outline: 2px solid var(--link);
   outline-offset: 2px;
 }
 
+/* Header bar */
+.bar :focus-visible {
+  outline-color: var(--accent);
+}
+.bar a {
+  color: var(--bar-ink);
+  text-decoration: none;
+  transition:
+    color 0.15s,
+    text-shadow 0.15s;
+}
+.bar a:hover,
+.bar a[aria-current] {
+  color: var(--accent);
+}
+.bar a:hover {
+  text-shadow: 0 0 12px var(--accent);
+}
+
+/* Lift-and-glow on hover for buttons and chips */
+.fx {
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+.fx:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 3px var(--glow),
+    0 4px 14px var(--glow);
+}
+
+/* Song list rows slide and get the accent bar */
+.song-row {
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s,
+    background 0.18s;
+}
+.song-row:hover,
+.song-row:focus-within {
+  background: var(--hover);
+  transform: translateX(4px);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+/* Link cards (artists, easy songs, rhythms on the home page) lift and pick up the accent border */
+.card {
+  transition:
+    transform 0.18s,
+    box-shadow 0.18s,
+    border-color 0.18s;
+}
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: 0 8px 22px var(--glow);
+}
+
+/* Shared animations: skins and Mầm use these classes. */
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+@keyframes pulse-glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 50%, transparent));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent) 95%, transparent));
+  }
+}
+@keyframes drift {
+  from {
+    transform: translateX(-80px);
+  }
+  to {
+    transform: translateX(80px);
+  }
+}
+@keyframes twinkle {
+  50% {
+    opacity: 0.2;
+  }
+}
+@keyframes bob {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+.anim-sway {
+  animation: sway 4s ease-in-out infinite;
+}
+.anim-lit {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+.anim-drift {
+  animation: drift 30s ease-in-out infinite alternate;
+}
+.anim-twinkle {
+  animation: twinkle 2.4s infinite;
+}
+.anim-bob {
+  animation: bob 2.6s ease-in-out infinite;
+}
+.anim-blink {
+  animation: blink 4s infinite;
+  transform-origin: 40px 58px;
+}
+
+/* Mầm's "busy" pose (page loading): trots in place, feet stepping in turn, lantern swinging. One stride is 1s. */
+@keyframes swing {
+  0%,
+  100% {
+    transform: rotate(-14deg);
+  }
+  50% {
+    transform: rotate(14deg);
+  }
+}
+@keyframes step {
+  0%,
+  50%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-3px);
+  }
+}
+.anim-trot {
+  animation: bob 0.5s ease-in-out infinite;
+}
+.anim-step {
+  animation: step 1s ease-in-out infinite;
+}
+.anim-swing {
+  animation: swing 1s ease-in-out infinite;
+}
+
+/* Page-loading skeleton blocks: a soft lantern glow sweeps across. */
+@keyframes shimmer {
+  from {
+    background-position: -150% 0;
+  }
+  to {
+    background-position: 250% 0;
+  }
+}
+.skeleton {
+  background-color: color-mix(in srgb, var(--line) 65%, transparent);
+  background-image: linear-gradient(90deg, transparent, var(--glow), transparent);
+  background-size: 50% 100%;
+  background-repeat: no-repeat;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* The loading state stays invisible for its first 300ms, so fast navigations do not flash it. */
+@keyframes loading-in {
+  from {
+    opacity: 0;
+  }
+}
+.loading-in {
+  animation: loading-in 0.2s ease-out 0.3s both;
+}
+
+/* Glow-follows-cursor, only when the visitor turns it on, and never on touch screens (no cursor to follow). */
+.glow-layer {
+  display: none;
+}
+:root[data-glow="on"] .glow-layer {
+  display: block;
+}
+@media (pointer: coarse) {
+  :root[data-glow="on"] .glow-layer {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  :root[data-glow="on"] .glow-layer {
+    display: none;
+  }
+  /* Keep the loading delay (an instant reveal, no fade), or the rule above would flash it on every navigation. */
+  .loading-in {
+    animation: loading-in 1ms 0.3s both !important;
+  }
+}
+
 /* Rendered Markdown (agent docs). */
-.doc { color: var(--color-ink); line-height: 1.65; overflow-wrap: anywhere; }
+.doc { color: var(--ink); line-height: 1.65; overflow-wrap: anywhere; }
 .doc > :first-child { margin-top: 0; }
-.doc h2 { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 700; margin: 2rem 0 0.75rem; color: #16301f; }
-.doc h3 { font-size: 1.15rem; font-weight: 800; margin: 1.5rem 0 0.5rem; }
+.doc h2 { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 400; margin: 2rem 0 0.75rem; }
+.doc h3 { font-size: 1.15rem; font-weight: 700; margin: 1.5rem 0 0.5rem; }
 .doc p, .doc ul, .doc ol, .doc table, .doc pre { margin: 0.75rem 0; }
 .doc ul { list-style: disc; padding-left: 1.4rem; }
 .doc ol { list-style: decimal; padding-left: 1.4rem; }
 .doc li { margin: 0.3rem 0; }
-.doc a { color: var(--color-forest); text-decoration: underline; }
-.doc code { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.88em; background: var(--color-mist); padding: 0.1em 0.35em; border-radius: 6px; }
-.doc pre { background: #16301f; color: #e8f3e4; padding: 1rem; border-radius: 14px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
+.doc a { color: var(--link); text-decoration: underline; }
+.doc code { font-family: var(--font-mono); font-size: 0.88em; background: var(--hover); padding: 0.1em 0.35em; border-radius: 6px; }
+.doc pre { background: var(--bar); color: var(--bar-ink); padding: 1rem; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
 .doc pre code { background: none; padding: 0; color: inherit; overflow-wrap: normal; }
 .doc table { display: block; overflow-x: auto; border-collapse: collapse; font-size: 0.92rem; }
-.doc th, .doc td { border: 1px solid var(--color-line); padding: 0.45rem 0.7rem; text-align: left; vertical-align: top; }
-.doc th { background: var(--color-moss); }
+.doc th, .doc td { border: 1px solid var(--line); padding: 0.45rem 0.7rem; text-align: left; vertical-align: top; }
+.doc th { background: var(--hover); }

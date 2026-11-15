@@ -1,7 +1,6 @@
 import { countLabels, type RhythmPattern, type Stroke } from "./rhythm";
 
-let ctx: AudioContext | null = null;
-const audio = () => (ctx ??= new AudioContext());
+import { audioContext as audio, releaseAudio, unlockAudio } from "./audio-unlock";
 
 function pluck({ out, note, t, gain, decay }: { out: AudioNode; note: number; t: number; gain: number; decay: number }) {
   const a = audio();
@@ -32,7 +31,7 @@ function slap({ out, t }: { out: AudioNode; t: number }) {
 
 /** Plays the notes low to high like a quick down-strum. */
 export function strum(midi: number[]): void {
-  const a = audio();
+  const a = unlockAudio({ holdSeconds: 2.5 });
   midi.forEach((note, i) => pluck({ out: a.destination, note, t: a.currentTime + i * 0.035, gain: 0.16, decay: 1.8 }));
 }
 
@@ -69,12 +68,11 @@ export type Playback = { stop: () => void; stepAt: () => number | null };
 
 /** Loops `bars` bars of the pattern on one chord. `stepAt` tells which step is sounding now (null when finished). */
 export function playPattern({ pattern, midi, bars = 4 }: { pattern: RhythmPattern; midi: number[]; bars?: number }): Playback {
-  const a = audio();
-  void a.resume();
-  const out = a.createGain();
-  out.connect(a.destination);
   const stepDur = 60 / pattern.bpm / pattern.subdivision;
   const steps = countLabels(pattern).length;
+  const a = unlockAudio({ holdSeconds: bars * steps * stepDur + 2 });
+  const out = a.createGain();
+  out.connect(a.destination);
   const start = a.currentTime + 0.08;
   for (let bar = 0; bar < bars; bar++)
     pattern.steps.forEach((stroke, i) => playStroke({ out, stroke, midi, t: start + (bar * steps + i) * stepDur, decay: Math.max(0.25, stepDur * 2) }));
@@ -83,6 +81,7 @@ export function playPattern({ pattern, midi, bars = 4 }: { pattern: RhythmPatter
     stop: () => {
       stopped = true;
       out.disconnect();
+      releaseAudio();
     },
     stepAt: () => {
       const n = Math.floor((a.currentTime - start) / stepDur);

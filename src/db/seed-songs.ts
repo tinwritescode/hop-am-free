@@ -12,6 +12,7 @@ export const SEED_SONGS: NewSong[] = [
     genre: "Pop",
     contributor: "HanYoo",
     sourceUrl: null,
+    capo: null,
     sheet: `## Intro
 [Cmaj7] [Gmaj7] [Cmaj7] [Gmaj7] [Bb] [Am7] [Abmaj7] [G]
 ## Phiên khúc 1

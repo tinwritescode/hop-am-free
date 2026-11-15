@@ -66,6 +66,14 @@ export function lookupChord(name: string): ChordEntry | null {
   return list.find((c) => c.suffix === suffix) ?? null;
 }
 
+/** Each barre as the strings it covers, first to last string pressed at that fret; a barre on one string is just a dot. */
+export function barreRanges(position: Position): { fret: number; from: number; to: number }[] {
+  return position.barres.flatMap((fret) => {
+    const idx = position.frets.flatMap((f, i) => (f === fret ? [i] : []));
+    return idx.length > 1 ? [{ fret, from: idx[0], to: idx[idx.length - 1] }] : [];
+  });
+}
+
 function barreSpan(position: Position, barre: number): number {
   const idx = position.frets.flatMap((f, i) => (f === barre ? [i] : []));
   return idx.length ? idx[idx.length - 1] - idx[0] + 1 : 0;

@@ -1,6 +1,7 @@
 import "server-only";
 import { after } from "next/server";
 import type { CurrentUser } from "./auth";
+import { songChanged } from "./read-cache";
 import { ensureSongRhythms } from "./rhythms";
 import { createSong, findBySourceUrl } from "./songs";
 import { SongDraftSchema, type Song } from "@/lib/song";
@@ -18,6 +19,7 @@ export async function publishSong({ user, input }: { user: CurrentUser | null; i
   }
 
   const song = await createSong({ draft: draft.data, contributor: user.name, createdBy: user.id });
+  songChanged(song.slug);
   // The song page also asks on first view; starting here means suggestions are usually ready by then.
   after(() =>
     ensureSongRhythms(song).catch((err: unknown) => console.error("rhythm suggestion failed", { slug: song.slug, err: err instanceof Error ? err.message : String(err) })),

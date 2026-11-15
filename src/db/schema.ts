@@ -1,4 +1,5 @@
-import { integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { check, integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 export const songs = pgTable("songs", {
   id: serial("id").primaryKey(),
@@ -16,7 +17,16 @@ export const songs = pgTable("songs", {
   sourceUrl: text("source_url"),
   createdBy: text("created_by"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+  /** Fret 0–11 the capo sits on; null = unknown. Read through capoFromColumns (src/lib/capo.ts). */
+  capo: integer("capo"),
+  /** Who set `capo`: sheet, ai or editor. `editor` with a null capo means an admin marked it unknown on purpose. */
+  capoSource: text("capo_source"),
+}, (t) => [
+  check(
+    "songs_capo_check",
+    sql`(${t.capo} IS NULL AND (${t.capoSource} IS NULL OR ${t.capoSource} = 'editor')) OR (${t.capo} BETWEEN 0 AND 11 AND ${t.capoSource} IN ('sheet', 'ai', 'editor'))`,
+  ),
+]);
 
 /** One strumming/picking version of a rhythm (điệu). AI creates a row the first time a song needs a rhythm nobody has yet. */
 export const rhythms = pgTable("rhythms", {

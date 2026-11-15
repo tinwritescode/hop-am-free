@@ -20,6 +20,7 @@ To publish songs an admin asked for:
 4. **Review the draft.** Nothing is published until you create it.
    - `unknownChords` must be empty. Fix or remove any chord the site cannot draw.
    - Title, artist, and key should match the source.
+   - Keep `capo` only if the source states it; otherwise leave it `null`.
    - Remove ads, comments, and navigation text from `sheet`.
 5. **Publish.** Run `hopamfree create song.json`, or call `POST /api/songs`.
    - **400** lists the fields that are invalid.
@@ -41,13 +42,18 @@ The server validates every draft:
   "genre": "Pop",
   "rhythm": "Ballad",
   "sheet": "[Verse]\n[Am]Lời bài [F]hát...",
-  "sourceUrl": "https://hopamchuan.com/song/70362/no/"
+  "sourceUrl": "https://hopamchuan.com/song/70362/no/",
+  "capo": { "fret": 3, "source": "sheet" }
 }
 ```
 
 - In `sheet`, put each chord in brackets right before the syllable it falls on. Put section headings such as `[Verse]` and `[Chorus]` on their own line. A sheet holds at most 20,000 characters.
 - `key` must match `^[A-G][#b]?m?$`, for example `C`, `F#m` or `Bb`.
 - `sourceUrl` is optional, and a song's `sourceUrl` can only be published once.
+- `capo` is optional: the fret (0–11) a player clamps the capo on to sound like the recording with these chord shapes. Leave it `null` (or out) when you do not know it; never guess.
+  - `{"fret": 3, "source": "sheet"}` when the source page or sheet states it ("Capo 3", "capo ngăn 3", "kẹp capo 2"). `import` fills it in this form when the page states one.
+  - `{"fret": 3, "source": "editor"}`, or just `3`, when you or the admin set it yourselves.
+  - `0` means "no capo". `"ai"` is not accepted here; AI estimates are only made by the site's own backfill and are labelled as such on the song page.
 
 After a song is published, the site picks suitable strumming rhythms (điệu) for it in the background.
 

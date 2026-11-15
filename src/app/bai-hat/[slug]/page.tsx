@@ -5,58 +5,85 @@ import { currentUser } from "@/db/auth";
 import { getSongRhythms } from "@/db/rhythms";
 import { getSettings } from "@/db/settings";
 import { getSong } from "@/db/songs";
-import { SiteHeader } from "@/components/SiteHeader";
-import { ForestFooter, SkyBand } from "@/components/Scenery";
+import { ArtistLinks } from "@/components/ArtistLinks";
+import { CapoBadge } from "@/components/song/CapoBadge";
+import { CapoEditor } from "@/components/song/CapoEditor";
 import { SongView } from "@/components/song/SongView";
+import { ShareSongButton } from "@/components/telegram/ShareSongButton";
+import { artistsOf } from "@/lib/catalog";
+import { breadcrumbJsonLd, pageMeta, songCard, songDescription, songOgPath } from "@/lib/seo";
+import { siteOrigin } from "@/lib/site";
+import { DEFAULT_QUERY, hrefWith, LIST_PATH } from "@/lib/song-list";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const song = await getSong((await params).slug);
   if (!song) return {};
-  return {
+  return pageMeta({
     title: `Hợp âm ${song.title} – ${song.artist}`,
-    description: `Hợp âm guitar ${song.title} (${song.artist}), tone ${song.key}${song.rhythm ? `, điệu ${song.rhythm}` : ""}. Lời và thế bấm trên cùng một màn hình.`,
-  };
+    description: songDescription(song),
+    path: `${LIST_PATH}/${song.slug}`,
+    image: songOgPath({ slug: song.slug, card: songCard(song) }),
+  });
 }
 
 export default async function SongPage({ params }: Props) {
   const [song, user] = await Promise.all([getSong((await params).slug), currentUser()]);
   if (!song) notFound();
   const [rhythms, savedSettings] = await Promise.all([getSongRhythms(song.id), user ? getSettings(user.id) : null]);
+  const origin = siteOrigin();
+  const artists = artistsOf(song.artist);
+  const trail = [
+    { name: "Bài hát", path: LIST_PATH },
+    // A breadcrumb is one path, so a duet goes through its first singer.
+    ...artists.slice(0, 1).map((name) => ({ name, path: hrefWith(DEFAULT_QUERY, { artist: name }) })),
+    { name: song.title, path: `${LIST_PATH}/${song.slug}` },
+  ];
 
   return (
-    <>
-      <SkyBand>
-        <SiteHeader />
-        <section className="mx-auto flex max-w-[1280px] flex-wrap items-end justify-between gap-5 px-4 pt-7 pb-32 sm:px-8">
-          <div className="flex min-w-0 flex-col gap-2.5">
-            <nav aria-label="Đường dẫn" className="text-sm font-semibold text-[#2e4a3a]">
-              <Link href="/" className="hover:text-forest">
-                Bài hát
-              </Link>{" "}
-              {[song.genre, song.rhythm].filter(Boolean).map((t) => ` / ${t}`)}
-            </nav>
-            <h1 className="font-serif text-4xl leading-tight font-bold text-[#16301f] sm:text-[52px]">{song.title}</h1>
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[15px] text-[#2e4a3a]">
+    <main>
+      {origin && (
+        // JSON.stringify escapes quotes; "<" is escaped too so a title can never close the script tag.
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd({ origin, trail })).replace(/</g, "\\u003c") }} />
+      )}
+      <section className="flex min-w-0 flex-col gap-2 pt-5 pb-5 lg:gap-1 lg:pt-3 lg:pb-3">
+        <nav aria-label="Đường dẫn" className="text-sm font-semibold text-soft">
+          <Link href={LIST_PATH} className="text-soft hover:text-link">
+            Bài hát
+          </Link>
+          {song.genre && ` / ${song.genre}`}
+          {song.rhythm && (
+            <>
+              {" / "}
+              <Link href={hrefWith(DEFAULT_QUERY, { rhythm: song.rhythm })} className="text-soft hover:text-link">
+                {song.rhythm}
+              </Link>
+            </>
+          )}
+        </nav>
+        {/* Desktop: a smaller title with the details on the same line, so the lyrics start higher. */}
+        <div className="flex flex-col gap-2 lg:flex-row lg:flex-wrap lg:items-baseline lg:gap-x-5 lg:gap-y-1">
+          <h1 className="font-serif text-4xl leading-tight font-normal sm:text-[44px] lg:text-[clamp(1.625rem,0.9rem+1.1vw,2.25rem)]">{song.title}</h1>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[15px] text-soft">
+            <span>
+              Ca sĩ{" "}
+              <ArtistLinks artists={artists} className="font-bold text-ink hover:text-link" />
+            </span>
+            {song.composer && (
               <span>
-                Ca sĩ <strong className="font-extrabold text-forest">{song.artist}</strong>
+                Sáng tác <strong className="font-bold text-ink">{song.composer}</strong>
               </span>
-              {song.composer && (
-                <span>
-                  Sáng tác <strong className="font-bold text-[#16301f]">{song.composer}</strong>
-                </span>
-              )}
-              <span className="rounded-full bg-white px-3 py-1 text-[13px] font-extrabold text-forest">Tone {song.key}</span>
-              {song.rhythm && <span className="rounded-full bg-white/70 px-3 py-1 text-[13px] font-bold">Điệu {song.rhythm}</span>}
-            </div>
+            )}
+            <span className="rounded-md border border-line-strong bg-surface px-2.5 py-0.5 font-mono text-[13px] font-bold text-ink">Tone {song.key}</span>
+            <CapoBadge songKey={song.key} capo={song.capo} />
+            {song.rhythm && <span className="rounded-md bg-hover px-2.5 py-0.5 text-[13px] font-semibold text-ink">Điệu {song.rhythm}</span>}
+            <ShareSongButton slug={song.slug} title={song.title} />
           </div>
-        </section>
-      </SkyBand>
-      <main className="relative mx-auto -mt-24 max-w-[1280px] px-4 sm:px-8">
-        <SongView song={song} rhythms={rhythms} savedSettings={savedSettings} signedIn={user !== null} />
-      </main>
-      <ForestFooter />
-    </>
+        </div>
+        {user?.isAdmin && <CapoEditor key={`${song.capo?.fret}-${song.capo?.source}`} slug={song.slug} capo={song.capo} />}
+      </section>
+      <SongView song={song} rhythms={rhythms} savedSettings={savedSettings} signedIn={user !== null} />
+    </main>
   );
 }

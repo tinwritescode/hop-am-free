@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { transposeChord, lookupChord, difficultyOf, voicingsFor, midiOf, tabOf, handHint } from "./chords";
+import { barreRanges, transposeChord, lookupChord, difficultyOf, voicingsFor, midiOf, tabOf, handHint } from "./chords";
 
 describe("transposeChord", () => {
   it("moves root and bass by semitones using the database spelling", () => {
@@ -59,5 +59,13 @@ describe("difficultyOf / voicingsFor", () => {
   it("can order voicings easiest first", () => {
     const [first] = voicingsFor({ name: "Bbmaj7", easiestFirst: true });
     expect(difficultyOf(first)).not.toBe("hard");
+  });
+});
+
+describe("barreRanges", () => {
+  it("spans each barre from its first to its last pressed string, and drops a one-string barre", () => {
+    expect(barreRanges({ frets: [1, 3, 3, 2, 1, 1], barres: [1], baseFret: 1 })).toEqual([{ fret: 1, from: 0, to: 5 }]);
+    expect(barreRanges({ frets: [-1, 0, 2, 2, 2, 0], barres: [2], baseFret: 1 })).toEqual([{ fret: 2, from: 2, to: 4 }]);
+    expect(barreRanges({ frets: [-1, 3, 2, 0, 1, 0], barres: [1], baseFret: 1 })).toEqual([]);
   });
 });

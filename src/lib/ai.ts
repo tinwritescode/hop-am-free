@@ -10,6 +10,7 @@ import { DIFFICULTY_LABEL, difficultyOf, voicingsFor } from "./chords";
 import { AiResultSchema, parseAiOutput, type AiResult, type AiTask } from "./ai-schema";
 import { RhythmSuggestionsSchema, STROKES, TIME_SIGNATURES, type RhythmSuggestion } from "./rhythm";
 import type { PageText } from "./crawl";
+import { CapoFretSchema, CapoGuessSchema, parseCapoMention, type Capo, type CapoGuess } from "./capo";
 
 const Env = z.object({ AI_BASE_URL: z.url(), AI_API_KEY: z.string().min(1), AI_MODEL: z.string().min(1) });
 
@@ -118,12 +119,13 @@ JSON: {"rhythms":[{"slug":"ballad","reason":"...","pattern":null},{"slug":"slow-
   return parsed.data.rhythms;
 }
 
-const ImportedSchema = SongDraftSchema.omit({ sourceUrl: true });
+// The model reports a capo only when the page states it, so an extracted capo counts as stated by the sheet.
+const ImportedSchema = SongDraftSchema.omit({ sourceUrl: true, capo: true }).extend({ capo: CapoFretSchema.nullable().default(null) });
 
 /** Turns crawled page text into a clean draft; cached per URL so re-importing the same link is free. */
-export function importSong({ url, page }: { url: string; page: PageText }): Promise<Omit<SongDraft, "sourceUrl">> {
-  return cached({
-    key: `import:v1:${url}`,
+export async function importSong({ url, page }: { url: string; page: PageText }): Promise<Omit<SongDraft, "sourceUrl">> {
+  const { capo, ...draft } = await cached({
+    key: `import:v2:${url}`,
     schema: ImportedSchema,
     compute: async () => {
       const prompt = `Dưới đây là nội dung một trang web về một bài hát (đã bỏ HTML). Hãy trích ra bản hợp âm guitar và làm sạch nó.
@@ -133,7 +135,8 @@ Quy tắc cho "sheet":
 - Giữ nguyên lời và hợp âm của bản gốc; chỉ sửa khoảng trắng, chính tả rõ ràng sai, và chuẩn hóa tên hợp âm (A# → Bb, Hm → Bm, Am7/G giữ nguyên).
 - Bỏ hết menu, quảng cáo, bình luận, chữ không thuộc bài hát.
 "key" là tone gốc dạng C, Am, F#m, Bb. "artist" là ca sĩ; "composer" là người sáng tác ("" nếu không có). "rhythm" là điệu nếu trang ghi ("" nếu không). "genre" là thể loại nếu có ("" nếu không).
-JSON: {"title":"...","artist":"...","composer":"...","key":"Am","genre":"","rhythm":"","sheet":"## Phiên khúc 1\\nNó như thế [Am]này..."}
+"capo" là số ngăn kẹp capo (0–11) CHỈ KHI bản hợp âm hoặc trang ghi rõ, ví dụ "Capo 3", "capo ngăn 3", "kẹp capo 2", "Capo on 2nd fret"; không ghi thì null. Không tự đoán capo, không suy ra từ tone, không lấy từ bình luận của người đọc.
+JSON: {"title":"...","artist":"...","composer":"...","key":"Am","genre":"","rhythm":"","capo":null,"sheet":"## Phiên khúc 1\\nNó như thế [Am]này..."}
 
 Tiêu đề trang: ${page.title}
 Mô tả: ${page.description}
@@ -141,6 +144,33 @@ Nội dung:
 ${page.text}`;
       const parsed = ImportedSchema.safeParse(await askJson(prompt));
       if (!parsed.success) throw new Error("AI import failed validation");
+      return parsed.data;
+    },
+  });
+  // The model sometimes drops the capo line while cleaning; the sheet itself may still state it.
+  const fret = capo ?? parseCapoMention(draft.sheet);
+  return { ...draft, capo: fret === null ? null : ({ fret, source: "sheet" } satisfies Capo) };
+}
+
+/** Cached per song content, so re-running the backfill asks the model once per version of a song. */
+export function guessCapo(song: Song): Promise<CapoGuess> {
+  const chords = chordsInOrder(song.sheet);
+  return cached({
+    key: `capo:v1:${song.slug}:${contentHash([song.title, song.artist, song.key, chords.join(" ")])}`,
+    schema: CapoGuessSchema,
+    compute: async () => {
+      const prompt = `Bài: ${song.title} – ${song.artist}${song.composer ? ` (sáng tác ${song.composer})` : ""}.
+Bản hợp âm trên trang viết ở tone ${song.key}. Hợp âm trong bài: ${chords.join(", ")}.
+
+Người chơi guitar muốn đệm theo bản thu gốc hoặc bản thu phổ biến nhất của bài này bằng đúng các thế bấm trên. Họ cần kẹp capo ngăn mấy?
+Cách tính: capo = (tone bản thu − tone bản hợp âm) mod 12, tính theo nửa cung. Nếu bản thu ở đúng tone ${song.key} thì capo = 0.
+- Chỉ trả lời khi thật sự biết bản thu này và tone của nó. Không biết bài, không chắc bản thu nào, hoặc chỉ đoán theo thói quen: "capo": null.
+- "soundingKey" là tone bản thu (cùng giọng trưởng/thứ với ${song.key}), null nếu "capo" là null.
+- "confidence": "high" khi chắc chắn tone bản thu, "medium" khi khá chắc, "low" khi chỉ đoán.
+- "reason": 1 câu, nêu bản thu nào và tone gì.
+JSON: {"capo":3,"confidence":"medium","soundingKey":"Eb","reason":"..."}`;
+      const parsed = CapoGuessSchema.safeParse(await askJson(prompt));
+      if (!parsed.success) throw new Error("AI capo guess failed validation");
       return parsed.data;
     },
   });

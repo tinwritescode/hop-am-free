@@ -13,7 +13,8 @@
     "test": "vitest run",
     "cli": "node cli/hopamfree.mts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.mts"
+    "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.mts",
+    "db:backfill-capo": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/backfill-capo.mts"
   },
   "dependencies": {
     "@tombatossals/chords-db": "^0.5.1",

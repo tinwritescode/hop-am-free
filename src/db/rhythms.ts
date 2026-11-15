@@ -5,8 +5,14 @@ import { rhythms, songRhythms } from "./schema";
 import { suggestRhythms } from "@/lib/ai";
 import { planRhythms, RhythmPatternSchema, type SongRhythm } from "@/lib/rhythm";
 import type { Song } from "@/lib/song";
+import { cachedRhythms, rhythmsChanged } from "./read-cache";
 
+/** For pages: cached across requests, refreshed when ensureSongRhythms adds links. */
 export async function getSongRhythms(songId: number): Promise<SongRhythm[]> {
+  return cachedRhythms({ songId, read: () => readSongRhythms(songId) });
+}
+
+async function readSongRhythms(songId: number): Promise<SongRhythm[]> {
   const rows = await db()
     .select({ slug: rhythms.slug, reason: songRhythms.reason, pattern: rhythms })
     .from(songRhythms)
@@ -29,7 +35,7 @@ export function ensureSongRhythms(song: Song): Promise<SongRhythm[]> {
   const running = inflight.get(song.id);
   if (running) return running;
   const job = (async () => {
-    const existing = await getSongRhythms(song.id);
+    const existing = await readSongRhythms(song.id);
     if (existing.length) return existing;
 
     const catalog = await db().select({ slug: rhythms.slug, name: rhythms.name, timeSignature: rhythms.timeSignature }).from(rhythms);
@@ -45,7 +51,8 @@ export function ensureSongRhythms(song: Song): Promise<SongRhythm[]> {
       return rhythmId ? [{ songId: song.id, rhythmId, rank, reason: p.reason }] : [];
     });
     if (links.length) await db().insert(songRhythms).values(links).onConflictDoNothing();
-    return getSongRhythms(song.id);
+    rhythmsChanged(song.id);
+    return readSongRhythms(song.id);
   })().finally(() => inflight.delete(song.id));
   inflight.set(song.id, job);
   return job;

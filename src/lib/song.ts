@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { chordsInOrder, parseChordSheet, type ChordSheet } from "./chordsheet";
 import { lookupChord } from "./chords";
+import { capoColumns, capoFromColumns, CapoDraftSchema, type Capo, type CapoColumns } from "./capo";
 import { fold } from "./text";
 
 /** What an admin fills in (or an import pre-fills) to create a song. */
@@ -21,15 +22,26 @@ export const SongDraftSchema = z.object({
     .max(20_000)
     .refine((s) => /\[[^\]]+\]/.test(s), "Bản nhạc cần có ít nhất một hợp âm dạng [C]"),
   sourceUrl: z.url().nullable().default(null),
+  capo: CapoDraftSchema,
 });
 export type SongDraft = z.infer<typeof SongDraftSchema>;
 
 export type NewSong = SongDraft & { slug: string; contributor: string };
 
-export type Song = Omit<NewSong, "sheet"> & { id: number; sheet: ChordSheet; raw: string };
+export type Song = Omit<NewSong, "sheet" | "capo"> & { id: number; sheet: ChordSheet; raw: string; capo: Capo | null };
 
-export function toSong(row: NewSong & { id: number }): Song {
-  return { ...row, raw: row.sheet, sheet: parseChordSheet(row.sheet) };
+/** A `songs` row as the database returns it; capo columns become `capo`, other columns pass through. */
+type SongRow = Omit<NewSong, "capo"> & { id: number; capo: number | null; capoSource: string | null };
+
+export function toSong(row: SongRow): Song {
+  const { capo, capoSource, sheet, ...rest } = row;
+  return { ...rest, raw: sheet, sheet: parseChordSheet(sheet), capo: capoFromColumns({ capo, capoSource }) };
+}
+
+/** The column values to insert for a new song. */
+export function songColumns<T extends { capo: Capo | null }>(song: T): Omit<T, "capo"> & CapoColumns {
+  const { capo, ...rest } = song;
+  return { ...rest, ...capoColumns(capo) };
 }
 
 export function slugify(title: string): string {

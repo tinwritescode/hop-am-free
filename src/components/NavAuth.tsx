@@ -9,16 +9,16 @@ export function NavAuth() {
 
   if (!user) {
     return (
-      <a href="/sign-in" className="rounded-full bg-white/90 px-4 py-2 text-[15px] font-semibold text-ink shadow-[0_2px_10px_rgba(47,107,71,0.12)]">
+      <a href="/sign-in" className="flex h-11 items-center px-2.5">
         Đăng nhập
       </a>
     );
   }
 
   return (
-    <form action={signOutAction} className="flex items-center gap-3 text-[15px] text-ink">
-      <span className="hidden sm:inline">{user.firstName ?? user.email}</span>
-      <button type="submit" className="rounded-full bg-white/90 px-4 py-2 font-semibold shadow-[0_2px_10px_rgba(47,107,71,0.12)]">
+    <form action={signOutAction} className="flex items-center gap-1">
+      <span className="hidden px-2.5 sm:inline">{user.firstName ?? user.email}</span>
+      <button type="submit" className="h-11 px-2.5 font-semibold text-bar-ink transition-colors hover:text-accent">
         Đăng xuất
       </button>
     </form>

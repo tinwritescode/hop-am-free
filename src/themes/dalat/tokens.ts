@@ -1,0 +1,92 @@
+import type { SkinTokens } from "../types";
+
+// Đà Lạt: pine hills and morning mist by day, a blue pine night with warm villa windows. Dã quỳ yellow is the accent.
+const SUNFLOWER = "#F2C230";
+const PINE = "#1F3A2E";
+const NIGHT = "#13212A";
+const MIST_CREAM = "#F1F3E8";
+
+export const dalatTokens: SkinTokens = {
+  // A pine cone (quả thông), tip as the hotspot.
+  cursor: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cpath d='M4 3c9 1 18 8 19 15 1 5-4 8-9 6C8 22 3 12 4 3z' fill='%23B07A3C' stroke='%231F3A2E' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M8 9q6 0 9 5M6 14q6 1 8 7M12 6q3 3 3 8' fill='none' stroke='%231F3A2E' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E") 4 3, auto`,
+  day: {
+    colorScheme: "light",
+    base: {
+      bg: "#F8F7EF",
+      surface: "#FFFFFF",
+      ink: "#1D2E26",
+      soft: "#4E6157",
+      line: "#DEE4D9",
+      "line-strong": "#B4C2B6",
+      link: "#22608C",
+      hover: "#EDF3EA",
+      bar: PINE,
+      "bar-ink": MIST_CREAM,
+      accent: SUNFLOWER,
+      "on-accent": PINE,
+      check: "#2E6B4A",
+      field: "#FFFFFF",
+      "field-ink": "#1D2E26",
+      glow: "rgba(242,194,48,0.22)",
+      ok: "#1E6B3C",
+      warn: "#A63A1E",
+      "warn-bg": "#FBEBE4",
+    },
+    scene: {
+      sky1: "#B9D6E4",
+      sky2: "#F8F7EF",
+      orb: "#FFF2C6",
+      star: "0",
+      mist: "#FFFFFF",
+      "mist-o": ".75",
+      hill: "#A9C2B4",
+      "pine-far": "#6F927F",
+      pine: "#3B5E4A",
+      wall: "#F3DDB4",
+      wall2: "#EFC9C3",
+      roof: "#6F6A88",
+      win: "#86A3B5",
+      flower: SUNFLOWER,
+    },
+  },
+  night: {
+    colorScheme: "dark",
+    base: {
+      bg: NIGHT,
+      surface: "#1A2C36",
+      ink: "#EEF1E6",
+      soft: "#AFC0BA",
+      line: "#2B404A",
+      "line-strong": "#4C6672",
+      link: "#F5CB4E",
+      hover: "#1D323D",
+      bar: "#0B161C",
+      "bar-ink": "#EEF1E6",
+      accent: SUNFLOWER,
+      "on-accent": NIGHT,
+      check: "#5FA77E",
+      field: "#FFFFFF",
+      "field-ink": "#1D2E26",
+      glow: "rgba(255,214,120,0.12)",
+      ok: "#8FDDA9",
+      warn: "#F4876A",
+      "warn-bg": "#3E2228",
+    },
+    scene: {
+      sky1: "#07121A",
+      sky2: NIGHT,
+      orb: "#F3EED8",
+      star: "1",
+      mist: "#A9BCC7",
+      "mist-o": ".22",
+      hill: "#1E3442",
+      "pine-far": "#152835",
+      pine: "#0B1A21",
+      wall: "#2E3D4C",
+      wall2: "#36394B",
+      roof: "#1A2431",
+      win: "#FFC861",
+      flower: "#C9A030",
+    },
+  },
+};
