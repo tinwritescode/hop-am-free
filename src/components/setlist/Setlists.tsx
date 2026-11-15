@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Mascot } from "@/components/Mascot";
 import { LIST_PATH } from "@/lib/song-list";
 import { setlistHref, setlistSongHref } from "@/lib/setlist";
+import { sfx } from "@/lib/sfx";
 import { useSetlist, type SetlistItem } from "./useSetlist";
 
 /** A song on the list page; `artist` and `key` only when the list came from the server. */
@@ -36,13 +37,22 @@ export function MySetlist() {
       }
       rowControls={(song, i) => (
         <>
-          <button type="button" aria-label={`Đưa ${song.title} lên`} disabled={i === 0} onClick={() => move(song.slug, -1)} className={round}>
+          <button type="button" aria-label={`Đưa ${song.title} lên`} disabled={i === 0} onClick={() => {
+              sfx("tick");
+              move(song.slug, -1);
+            }} className={round}>
             ↑
           </button>
-          <button type="button" aria-label={`Đưa ${song.title} xuống`} disabled={i === items.length - 1} onClick={() => move(song.slug, 1)} className={round}>
+          <button type="button" aria-label={`Đưa ${song.title} xuống`} disabled={i === items.length - 1} onClick={() => {
+              sfx("tick");
+              move(song.slug, 1);
+            }} className={round}>
             ↓
           </button>
-          <button type="button" aria-label={`Bỏ ${song.title}`} onClick={() => remove(song.slug)} className={round}>
+          <button type="button" aria-label={`Bỏ ${song.title}`} onClick={() => {
+              sfx("unpop");
+              remove(song.slug);
+            }} className={round}>
             ✕
           </button>
         </>
@@ -79,6 +89,7 @@ function SetlistView({ songs, actions, rowControls }: { songs: readonly SetlistS
   const slugs = songs.map((s) => s.slug);
   const [copied, setCopied] = useState(false);
   const copy = async () => {
+    sfx("tick"); // before the await, while still inside the tap
     try {
       await navigator.clipboard.writeText(new URL(setlistHref(slugs), location.origin).href);
       setCopied(true);

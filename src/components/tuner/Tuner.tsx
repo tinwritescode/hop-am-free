@@ -5,6 +5,7 @@ import { Mascot } from "@/components/Mascot";
 import { strum } from "@/lib/audio";
 import { NOTES } from "@/lib/chords";
 import { listenPitch } from "@/lib/mic";
+import { sfx } from "@/lib/sfx";
 import { centsOff, median, nearestString, TUNINGS, verdict, type Tuning } from "@/lib/tuner";
 import { midiName } from "@/lib/voice";
 
@@ -44,6 +45,7 @@ export function Tuner() {
   useEffect(() => () => stop.current?.(), []);
 
   const start = async () => {
+    sfx("pop"); // inside the tap: also wakes the audio for the chime later
     setMic({ kind: "asking" });
     const recent: number[] = [];
     let silent = 0;
@@ -69,7 +71,10 @@ export function Tuner() {
           const cents = centsOff({ hz: smooth, midi: strings[string] });
           setReading({ hz: smooth, string, cents });
           held = verdict(cents) === "in-tune" ? { string, count: held.string === string ? held.count + 1 : 1 } : { string: -1, count: 0 };
-          if (held.count === HOLD) setTuned((done) => new Set(done).add(string));
+          if (held.count === HOLD) {
+            sfx("chime");
+            setTuned((done) => new Set(done).add(string));
+          }
         },
       });
       setMic({ kind: "on" });
@@ -95,6 +100,9 @@ export function Tuner() {
   const target = reading?.string ?? (auto ? null : picked);
   const state = reading ? verdict(reading.cents) : null;
   const allDone = tuned.size === tuning.strings.length;
+  useEffect(() => {
+    if (allDone) sfx("success");
+  }, [allDone]);
 
   return (
     <section aria-label="Lên dây đàn" className="bar overflow-hidden rounded-lg bg-bar text-bar-ink">
@@ -146,6 +154,7 @@ export function Tuner() {
             <button
               type="button"
               onClick={() => {
+                sfx("unpop");
                 stop.current?.();
                 stop.current = null;
                 setReading(null);

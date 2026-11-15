@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { SETLIST_PATH } from "@/lib/setlist";
+import { sfx } from "@/lib/sfx";
 import { useSetlist } from "./useSetlist";
 
 /** On a song page: puts the song in (or takes it out of) this visitor's setlist, with a way to the list once it has songs. */
@@ -14,7 +15,10 @@ export function SetlistToggle({ slug, title }: { slug: string; title: string }) 
         type="button"
         aria-pressed={inList}
         disabled={!inList && full}
-        onClick={() => toggle({ slug, title })}
+        onClick={() => {
+          sfx(inList ? "unpop" : "pop");
+          toggle({ slug, title });
+        }}
         className={`inline-flex h-9 items-center rounded-full border px-3.5 text-[13px] font-extrabold disabled:opacity-40 ${inList ? "border-link bg-hover text-link" : "border-line-strong bg-surface text-ink"}`}
       >
         {inList ? "✓ Trong danh sách" : full ? "Danh sách đã đầy" : "+ Danh sách"}

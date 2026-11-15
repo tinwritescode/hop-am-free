@@ -18,6 +18,7 @@ import { PRESENT_FONT, PRESENT_SELECTOR, Presenter } from "./Presenter";
 import type { SetlistNav } from "@/lib/setlist";
 import { VoiceTone } from "./VoiceTone";
 import { strum } from "@/lib/audio";
+import { sfx } from "@/lib/sfx";
 import { useAi } from "./useAi";
 import { useSettings } from "./useSettings";
 
@@ -252,11 +253,17 @@ export function SongView({
           <div className="ml-auto flex flex-wrap items-center gap-2 text-sm font-semibold text-soft">
             <span>Tone</span>
             <span className="inline-flex items-center rounded-full border border-line">
-              <button type="button" aria-label="Hạ nửa cung" onClick={() => setSemitones((s) => s - 1)} className="size-9 text-lg text-ink">
+              <button type="button" aria-label="Hạ nửa cung" onClick={() => {
+                  sfx("tick");
+                  setSemitones((s) => s - 1);
+                }} className="size-9 text-lg text-ink">
                 −
               </button>
               <span className="min-w-8 text-center font-extrabold text-ink">{transposeKey({ key: song.key, semitones })}</span>
-              <button type="button" aria-label="Nâng nửa cung" onClick={() => setSemitones((s) => s + 1)} className="size-9 text-lg text-ink">
+              <button type="button" aria-label="Nâng nửa cung" onClick={() => {
+                  sfx("tick");
+                  setSemitones((s) => s + 1);
+                }} className="size-9 text-lg text-ink">
                 +
               </button>
             </span>
@@ -271,10 +278,16 @@ export function SongView({
               🎤 Hợp giọng
             </button>
             <span className="inline-flex items-center rounded-full border border-line">
-              <button type="button" aria-label="Thu nhỏ chữ" onClick={() => update({ fontSize: Math.max(14, fontSize - 1) })} className="size-9 text-sm font-extrabold text-ink">
+              <button type="button" aria-label="Thu nhỏ chữ" onClick={() => {
+                  sfx("tick");
+                  update({ fontSize: Math.max(14, fontSize - 1) });
+                }} className="size-9 text-sm font-extrabold text-ink">
                 A−
               </button>
-              <button type="button" aria-label="Phóng to chữ" onClick={() => update({ fontSize: Math.min(28, fontSize + 1) })} className="size-9 text-base font-extrabold text-ink">
+              <button type="button" aria-label="Phóng to chữ" onClick={() => {
+                  sfx("tick");
+                  update({ fontSize: Math.min(28, fontSize + 1) });
+                }} className="size-9 text-base font-extrabold text-ink">
                 A+
               </button>
             </span>

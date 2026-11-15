@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Mascot } from "@/components/Mascot";
 import { transposeKey } from "@/lib/chords";
 import { listenPitch } from "@/lib/mic";
+import { sfx } from "@/lib/sfx";
 import { hzToMidi, midiName, suggestShift, voiceRange, type VoiceRange } from "@/lib/voice";
 
 const LISTEN_MS = 12_000;
@@ -36,6 +37,7 @@ export function VoiceTone({
   useEffect(() => () => finish.current?.(false), []);
 
   const listen = async () => {
+    sfx("pop"); // inside the tap: also wakes the audio for the sound at the end
     setCheck({ kind: "asking" });
     const readings: number[] = [];
     const started = performance.now();
@@ -59,6 +61,7 @@ export function VoiceTone({
       stop();
       if (!keep) return;
       const heard = voiceRange(readings);
+      sfx(heard ? "success" : "unpop");
       if (heard) onRange(heard);
       setCheck(heard ? { kind: "idle" } : { kind: "too-little" });
     };

@@ -6,6 +6,7 @@ import { Mascot } from "@/components/Mascot";
 import { DIFFICULTY_LABEL, difficultyOf, handHint, midiOf, tabOf, type Difficulty, type Position } from "@/lib/chords";
 import type { Substitution, TourStep } from "@/lib/ai-schema";
 import { strum } from "@/lib/audio";
+import { sfx } from "@/lib/sfx";
 import type { AiState } from "./useAi";
 
 export type RailChord = { name: string; sub: Substitution | null; voicings: Position[]; voicingIndex: number; inTour: boolean };
@@ -222,6 +223,7 @@ export function TourCard({
               type="button"
               onClick={(e) => {
                 if (step < steps.length - 1) return onStep(step + 1);
+                sfx("success");
                 playEffect({ effect: "confetti", from: e.currentTarget });
                 onClose();
               }}
