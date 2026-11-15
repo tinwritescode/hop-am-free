@@ -29,7 +29,7 @@ export default async function JobsPage({ searchParams }: Props) {
   const active = [...imports, ...rhythms].some((j) => j.state === "created" || j.state === "retry" || j.state === "active");
 
   return (
-    <main className="mx-auto max-w-[860px]">
+    <main>
       <AutoRefresh active={active} />
       <PageHeading title="Hàng đợi">Dán nhiều link, Mầm cào và đăng từng bài ở nền. Link trùng được bỏ qua, lỗi mạng hay AI được tự thử lại 3 lần.</PageHeading>
       <JobsBoard imports={imports} rhythms={rhythms} notice={await searchParams} />

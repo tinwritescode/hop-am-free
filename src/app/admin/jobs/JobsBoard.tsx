@@ -140,7 +140,7 @@ function NoticeLine({ notice }: { notice: Notice }) {
 
 function ImportForm({ open, notice }: { open: boolean; notice: Notice }) {
   return (
-    <details open={open} className={`${CARD} slide-open group`}>
+    <details open={open} className={`${CARD} slide-open group lg:p-6`}>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-serif text-xl text-ink">
         Nhập nhiều link
         <span aria-hidden className="text-base text-soft transition-transform group-open:rotate-180">⌄</span>
@@ -195,7 +195,7 @@ function Rhythms({ jobs }: { jobs: JobView[] }) {
   const counts = countStatuses(jobs.map((j) => j.status));
   const running = jobs.filter((j) => j.status === "running");
   return (
-    <section className={CARD}>
+    <section className={`${CARD} lg:p-6`}>
       <h2 className="font-serif text-xl text-ink">Gợi ý điệu</h2>
       <p className="mt-1 text-sm text-soft">Mỗi bài mới đăng được Mầm chọn điệu đệm ở nền, từng bài một theo thứ tự.</p>
       <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-hover" role="img" aria-label={`${counts.done} xong trên ${jobs.length}`}>
@@ -225,42 +225,61 @@ export function JobsBoard({ imports, rhythms, notice }: { imports: JobView[]; rh
   const live = [...imports, ...rhythms].some((j) => PENDING.includes(j.status));
 
   return (
-    <div className="flex flex-col gap-6">
-      {live && (
-        <p className="-mt-3 flex items-center gap-2 text-sm text-soft" aria-live="polite">
-          <span aria-hidden className="h-2 w-2 rounded-full bg-link motion-safe:animate-pulse" />
-          Đang có việc chạy, trang tự cập nhật mỗi 4 giây.
-        </p>
-      )}
-
-      <section className={CARD}>
-        <h2 className="font-serif text-xl text-ink">Cần xử lý</h2>
-        {attention.length === 0 ? (
-          <p className="mt-2 text-sm text-soft">Không có link nào lỗi hay cần xem lại.</p>
-        ) : (
-          <ul className="mt-1 divide-y divide-line">
-            {attention.map((job) => (
-              <JobRow key={job.id} job={job} />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <ImportForm open={batches.size === 0 || Boolean(notice.note || notice.queued)} notice={notice} />
-
-      {batches.size > 0 && (
-        <section className={CARD}>
-          <h2 className="font-serif text-xl text-ink">Các đợt nhập</h2>
-          <p className="mt-1 text-sm text-soft">Mỗi ô là một link. Đợt đã xong hết được thu gọn.</p>
-          <div className="mt-2">
-            {[...batches.entries()].map(([key, jobs]) => (
-              <Batch key={key} jobs={jobs} />
-            ))}
-          </div>
+    // Desktop: a sticky side column (overview, import, rhythms) beside the work list. Phone: one column,
+    // with what needs a hand near the top.
+    <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)] lg:items-start">
+      <aside className="contents lg:sticky lg:top-6 lg:flex lg:max-h-[calc(100dvh-3rem)] lg:flex-col lg:gap-6 lg:overflow-y-auto">
+        <section className={`${CARD} lg:p-6`}>
+          <h2 className="font-serif text-xl text-ink">Tổng quan</h2>
+          <p className="mt-1 text-sm text-soft">
+            {imports.length} link trong {batches.size} đợt nhập, giữ lại 7 ngày.
+          </p>
+          {imports.length > 0 && (
+            <div className="mt-3">
+              <Tally jobs={imports} />
+            </div>
+          )}
+          {live && (
+            <p className="mt-4 flex items-center gap-2 text-sm text-soft" aria-live="polite">
+              <span aria-hidden className="h-2 w-2 rounded-full bg-link motion-safe:animate-pulse" />
+              Đang có việc chạy, trang tự cập nhật mỗi 4 giây.
+            </p>
+          )}
         </section>
-      )}
+        <div className="max-lg:order-2">
+          <ImportForm open={batches.size === 0 || Boolean(notice.note || notice.queued)} notice={notice} />
+        </div>
+        <div className="max-lg:order-4">
+          <Rhythms jobs={rhythms} />
+        </div>
+      </aside>
 
-      <Rhythms jobs={rhythms} />
+      <div className="contents lg:flex lg:flex-col lg:gap-6">
+        <section className={`${CARD} max-lg:order-1`}>
+          <h2 className="font-serif text-xl text-ink">Cần xử lý</h2>
+          {attention.length === 0 ? (
+            <p className="mt-2 text-sm text-soft">Không có link nào lỗi hay cần xem lại.</p>
+          ) : (
+            <ul className="mt-1 divide-y divide-line">
+              {attention.map((job) => (
+                <JobRow key={job.id} job={job} />
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {batches.size > 0 && (
+          <section className={`${CARD} max-lg:order-3`}>
+            <h2 className="font-serif text-xl text-ink">Các đợt nhập</h2>
+            <p className="mt-1 text-sm text-soft">Mỗi ô là một link. Đợt đã xong hết được thu gọn.</p>
+            <div className="mt-2">
+              {[...batches.entries()].map(([key, jobs]) => (
+                <Batch key={key} jobs={jobs} />
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }
