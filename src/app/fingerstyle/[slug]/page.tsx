@@ -49,7 +49,7 @@ export default async function FingerstyleSongPage({ params, searchParams }: Prop
           </span>
           <span className={chip}>Độ khó: {DIFFICULTY_LABEL[arrangement.difficulty]}</span>
           <span className={`${chip} font-mono`}>Dây {tuning.name}</span>
-          <span className={`${chip} font-mono`}>Capo {arrangement.capo}</span>
+          <span className={`${chip} font-mono`}>{arrangement.capo ? `Capo ${arrangement.capo}` : "Không capo"}</span>
           {arrangement.video && (
             <a href={arrangement.video} target="_blank" rel="noopener noreferrer" className="font-bold text-link">
               Xem video gốc

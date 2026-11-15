@@ -150,7 +150,7 @@ export function Player({ tab, voice, columnsPerSecond }: { tab: Tab; voice: Voic
             <div className="flex flex-wrap items-center gap-2 text-[13px] font-bold">
               <span className="rounded-md bg-hover px-2.5 py-1 text-ink">{section?.name ?? "Bắt đầu"}</span>
               <span className={`rounded-md px-2.5 py-1 font-mono ${capoChanged ? "bg-warn text-surface" : "border border-line-strong text-ink"}`}>
-                {capoChanged ? `Đổi sang Capo ${capo}!` : `Capo ${capo}`}
+                {capoChanged ? `Đổi sang Capo ${capo}!` : capo ? `Capo ${capo}` : "Không capo"}
               </span>
             </div>
             <ul aria-live="polite" className="min-h-[54px] text-[13px] leading-snug text-ink sm:text-sm">
