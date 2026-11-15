@@ -370,6 +370,19 @@ input[type="checkbox"] {
   }
 }
 
+/* Disclosures that slide open and shut (admin queue). Browsers without ::details-content just snap. */
+.slide-open {
+  interpolate-size: allow-keywords;
+}
+.slide-open::details-content {
+  height: 0;
+  overflow: hidden;
+  transition: height 0.3s ease, content-visibility 0.3s allow-discrete;
+}
+.slide-open[open]::details-content {
+  height: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

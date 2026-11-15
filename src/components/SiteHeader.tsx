@@ -23,9 +23,14 @@ export async function SiteHeader() {
         <nav aria-label="Tài khoản" className="flex flex-wrap items-center">
           <ModeToggle />
           {user?.isAdmin && (
-            <Link href="/admin/bai-hat/moi" className="flex h-11 items-center px-2.5">
-              Đăng bài
-            </Link>
+            <>
+              <Link href="/admin/bai-hat/moi" className="flex h-11 items-center px-2.5">
+                Đăng bài
+              </Link>
+              <Link href="/admin/jobs" className="flex h-11 items-center px-2.5">
+                Hàng đợi
+              </Link>
+            </>
           )}
           <NavAuth />
         </nav>
