@@ -1,4 +1,4 @@
-// Server-rendered pieces of /bai-hat. Every control is a plain link to another list URL, so filters, sorting and
+// Pieces of /bai-hat. Every control is a plain link to another list URL, so filters, sorting and
 // paging work before (and without) JavaScript, and the back button steps through them.
 import Link from "next/link";
 import { SORTS, type Tally } from "@/lib/catalog";

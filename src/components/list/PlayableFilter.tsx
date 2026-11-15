@@ -1,22 +1,21 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { KnownChordChips } from "@/components/home/KnownChordChips";
 import { useKnownChords } from "@/components/home/useKnownChords";
 import { hrefWith, knownParam, type ListQuery } from "@/lib/song-list";
 
 /**
  * "Hợp âm bạn đã biết" and "Chỉ hiện bài chơi được ngay". The visitor's chords live in browser storage; turning the
- * filter on copies them into the URL (?hop-am=Am,C,G), so the server filters and pages the list and the link can be
+ * filter on copies them into the URL (?hop-am=Am,C,G), so the list filters and pages by it and the link can be
  * shared. A shared link keeps the sender's chords, and says so.
  */
 export function PlayableFilter({ query, common }: { query: ListQuery; common: readonly string[] }) {
-  const router = useRouter();
   const { known } = useKnownChords();
   const mine = knownParam(known);
   const on = query.known.length > 0;
   const fromLink = on && mine.join(",") !== query.known.join(",");
-  const go = (chords: string[], how: "push" | "replace") => router[how](hrefWith(query, { known: chords }), { scroll: false });
+  // The list is filtered in the browser (SongListView): changing the URL in place is enough.
+  const go = (chords: string[], how: "push" | "replace") => history[how === "push" ? "pushState" : "replaceState"](null, "", hrefWith(query, { known: chords }));
 
   return (
     <section id="hop-am" aria-labelledby="h-known" className="flex scroll-mt-4 flex-col gap-2.5">
