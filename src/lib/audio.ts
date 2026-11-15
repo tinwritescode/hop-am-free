@@ -18,7 +18,8 @@ function stringBuffer(note: number): AudioBuffer {
   return buf;
 }
 
-function pluck({ out, note, t, gain, decay }: { out: AudioNode; note: number; t: number; gain: number; decay: number }) {
+/** Plucks one string at time `t`; the returned gain lets a later note on the same string cut it short. */
+export function pluck({ out, note, t, gain, decay }: { out: AudioNode; note: number; t: number; gain: number; decay: number }): GainNode {
   const a = audio();
   const src = a.createBufferSource();
   const env = a.createGain();
@@ -28,16 +29,18 @@ function pluck({ out, note, t, gain, decay }: { out: AudioNode; note: number; t:
   src.connect(env).connect(out);
   src.start(t);
   src.stop(t + Math.min(decay, RING_SECONDS) + 0.05);
+  return env;
 }
 
-function slap({ out, t }: { out: AudioNode; t: number }) {
+/** A percussive hit on the strings: a muted strum, a dead note, a thump. */
+export function slap({ out, t, gain = 0.25 }: { out: AudioNode; t: number; gain?: number }) {
   const a = audio();
   const buf = a.createBuffer(1, Math.floor(a.sampleRate * 0.05), a.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
   const src = a.createBufferSource();
   const env = a.createGain();
-  env.gain.value = 0.25;
+  env.gain.value = gain;
   src.buffer = buf;
   src.connect(env).connect(out);
   src.start(t);
