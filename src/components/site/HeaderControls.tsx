@@ -55,6 +55,16 @@ const CATEGORIES: Category[] = [
         <circle cx="12" cy="11.5" r="1.6" fill="currentColor" />
       </svg>
     ),
+  },  {
+    href: "/len-day",
+    label: "Lên dây",
+    current: (p) => p === "/len-day",
+    icon: (
+      <svg {...ICON}>
+        <path d="M12 3v18M8 6h-2M8 11h-2M16 6h2M16 11h2" />
+        <path d="M8 3h8l-1 12H9z" />
+      </svg>
+    ),
   },
 ];
 

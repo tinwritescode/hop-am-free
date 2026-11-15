@@ -14,6 +14,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/",
     LIST_PATH,
     "/ca-si",
+    "/len-day",
     ...songs.map((s) => `${LIST_PATH}/${s.slug}`),
     ...tally(songs.flatMap((s) => s.artists)).map((a) => hrefWith(DEFAULT_QUERY, { artist: a.name })),
   ];
