@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Mascot } from "@/components/Mascot";
 import { transposeKey } from "@/lib/chords";
-import { detectPitch, hzToMidi, midiName, suggestShift, voiceRange, type VoiceRange } from "@/lib/voice";
+import { listenPitch } from "@/lib/mic";
+import { hzToMidi, midiName, suggestShift, voiceRange, type VoiceRange } from "@/lib/voice";
 
 const LISTEN_MS = 12_000;
 const READ_EVERY_MS = 60;
@@ -36,34 +37,26 @@ export function VoiceTone({
 
   const listen = async () => {
     setCheck({ kind: "asking" });
-    let stream: MediaStream;
+    const readings: number[] = [];
+    const started = performance.now();
+    let stop: () => void;
     try {
-      // Raw sound: the browser's voice clean-up bends the pitch.
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+      stop = await listenPitch({
+        everyMs: READ_EVERY_MS,
+        onPitch: (hz) => {
+          if (hz) readings.push(hzToMidi(hz));
+          const left = LISTEN_MS - (performance.now() - started);
+          if (left <= 0) finish.current?.(true);
+          else setCheck({ kind: "listening", note: hz ? midiName(Math.round(hzToMidi(hz))) : null, left });
+        },
+      });
     } catch {
       setCheck({ kind: "denied" });
       return;
     }
-    const ctx = new AudioContext();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 2048;
-    ctx.createMediaStreamSource(stream).connect(analyser);
-    const slice = new Float32Array(analyser.fftSize);
-    const readings: number[] = [];
-    const started = performance.now();
-    const timer = setInterval(() => {
-      analyser.getFloatTimeDomainData(slice);
-      const hz = detectPitch({ samples: slice, sampleRate: ctx.sampleRate });
-      if (hz) readings.push(hzToMidi(hz));
-      const left = LISTEN_MS - (performance.now() - started);
-      if (left <= 0) finish.current?.(true);
-      else setCheck({ kind: "listening", note: hz ? midiName(Math.round(hzToMidi(hz))) : null, left });
-    }, READ_EVERY_MS);
     finish.current = (keep) => {
       finish.current = null;
-      clearInterval(timer);
-      for (const t of stream.getTracks()) t.stop();
-      void ctx.close();
+      stop();
       if (!keep) return;
       const heard = voiceRange(readings);
       if (heard) onRange(heard);
