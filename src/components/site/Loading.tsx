@@ -1,6 +1,6 @@
 // Page-transition loading states, shown by the routes' loading.tsx while a page streams in.
 // Skeletons are built from Bone and TextBone, laid out like the page they stand in for, inside PageLoading.
-import { Mascot } from "@/components/Mascot";
+import { MamLoader } from "./MamLoader";
 import { CARD } from "./PageHeading";
 
 /** A placeholder box. Size it with Tailwind classes, e.g. `h-11 w-full`. */
@@ -26,7 +26,7 @@ export function PageLoading({ label, children }: { label: string; children: Reac
       <div aria-hidden="true">{children}</div>
       <div className="pointer-events-none absolute inset-x-0 top-24 flex justify-center px-4">
         <div className="flex flex-col items-center gap-1.5 rounded-lg border border-line bg-surface px-6 pt-4 pb-3 shadow-[0_8px_28px_var(--glow)]">
-          <Mascot size={72} motion="busy" />
+          <MamLoader size={72} />
           <p className="text-sm font-semibold text-soft">{label}</p>
         </div>
       </div>

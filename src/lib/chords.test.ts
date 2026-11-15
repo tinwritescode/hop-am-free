@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { barreRanges, transposeChord, lookupChord, difficultyOf, voicingsFor, midiOf, tabOf, handHint } from "./chords";
+import { barreRanges, rootPitchClass, transposeChord, lookupChord, difficultyOf, voicingsFor, midiOf, tabOf, handHint } from "./chords";
 
 describe("transposeChord", () => {
   it("moves root and bass by semitones using the database spelling", () => {
@@ -71,5 +71,13 @@ describe("barreRanges", () => {
     expect(barreRanges({ frets: [1, 3, 3, 2, 1, 1], barres: [1], baseFret: 1 })).toEqual([{ fret: 1, from: 0, to: 5 }]);
     expect(barreRanges({ frets: [-1, 0, 2, 2, 2, 0], barres: [2], baseFret: 1 })).toEqual([{ fret: 2, from: 2, to: 4 }]);
     expect(barreRanges({ frets: [-1, 3, 2, 0, 1, 0], barres: [1], baseFret: 1 })).toEqual([]);
+  });
+});
+
+describe("rootPitchClass", () => {
+  it("reads the root of a key or chord, any spelling", () => {
+    expect(rootPitchClass("Am")).toBe(9);
+    expect(rootPitchClass("Db")).toBe(1);
+    expect(rootPitchClass("nope")).toBeNull();
   });
 });

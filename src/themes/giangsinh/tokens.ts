@@ -1,0 +1,92 @@
+import type { SkinTokens } from "../types";
+
+// Giáng Sinh: snow, pine green and berry red by day; a deep blue Christmas Eve with warm windows and tree lights by night.
+// The gold of the tree-top star is the accent.
+const STAR = "#F2C14E";
+const PINE = "#1F4D3A";
+const EVE = "#0E1A2B";
+
+export const giangsinhTokens: SkinTokens = {
+  // A gold star, its top point as the hotspot.
+  cursor: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cpath d='M14 2l3.5 7.6 8.3.9-6.2 5.6 1.8 8.2L14 20.1l-7.4 4.2 1.8-8.2-6.2-5.6 8.3-.9z' fill='%23F2C14E' stroke='%231F4D3A' stroke-width='2' stroke-linejoin='round'/%3E%3C/svg%3E") 14 2, auto`,
+  day: {
+    colorScheme: "light",
+    base: {
+      bg: "#FBF7F2",
+      surface: "#FFFFFF",
+      ink: "#2A1A1F",
+      soft: "#5E4B50",
+      line: "#ECE3DC",
+      "line-strong": "#C9B8B0",
+      link: "#A61E2D",
+      hover: "#F8ECE8",
+      bar: PINE,
+      "bar-ink": "#FFF8EE",
+      accent: STAR,
+      "on-accent": "#2A1A1F",
+      check: "#B3263A",
+      field: "#FFFFFF",
+      "field-ink": "#2A1A1F",
+      glow: "rgba(242,193,78,0.25)",
+      ok: "#1E6B3F",
+      warn: "#A3341C",
+      "warn-bg": "#FDECE5",
+    },
+    scene: {
+      sky1: "#BFDDF0",
+      sky2: "#F3F7FA",
+      orb: "#FFF4D6",
+      star: "0",
+      hill: "#FFFFFF",
+      "hill-far": "#E3EEF5",
+      pine: "#2E6B4F",
+      "pine-far": "#7FA898",
+      wall: "#C2553F",
+      roof: "#FFFFFF",
+      win: "#F7D27A",
+      lights: ".35",
+      snow: "#FFFFFF",
+      "snow-o": ".95",
+    },
+  },
+  night: {
+    colorScheme: "dark",
+    base: {
+      bg: EVE,
+      surface: "#16243A",
+      ink: "#F2F0EA",
+      soft: "#B5BECB",
+      line: "#24344D",
+      "line-strong": "#45597A",
+      link: "#FFCF66",
+      hover: "#1B2C46",
+      bar: "#0A1320",
+      "bar-ink": "#F2F0EA",
+      accent: STAR,
+      "on-accent": EVE,
+      check: "#E05A5A",
+      field: "#FFFFFF",
+      "field-ink": "#2A1A1F",
+      glow: "rgba(255,207,102,0.14)",
+      ok: "#8EE0B0",
+      warn: "#FF8F73",
+      "warn-bg": "#3D1F2E",
+    },
+    scene: {
+      sky1: "#060D1A",
+      sky2: "#1A2C4A",
+      orb: "#F3EED8",
+      star: "1",
+      hill: "#C9D6E6",
+      "hill-far": "#7D90AB",
+      pine: "#12301F",
+      "pine-far": "#22413A",
+      wall: "#6B2A24",
+      roof: "#D9E2EE",
+      win: "#FFC861",
+      lights: "1",
+      snow: "#FFFFFF",
+      "snow-o": ".8",
+    },
+  },
+};

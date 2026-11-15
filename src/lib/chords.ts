@@ -1,7 +1,7 @@
 import guitar from "@tombatossals/chords-db/lib/guitar.json";
 
 // Spelling follows the chord database keys, so transposed names always resolve.
-const NOTES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"] as const;
+export const NOTES = ["C", "C#", "D", "Eb", "E", "F", "F#", "G", "Ab", "A", "Bb", "B"] as const;
 type Note = (typeof NOTES)[number];
 const ENHARMONIC: Record<string, Note> = { Db: "C#", "D#": "Eb", Gb: "F#", "G#": "Ab", "A#": "Bb", Cb: "B", "B#": "C", Fb: "E", "E#": "F" };
 const DB_KEY: Record<Note, string> = { C: "C", "C#": "Csharp", D: "D", Eb: "Eb", E: "E", F: "F", "F#": "Fsharp", G: "G", Ab: "Ab", A: "A", Bb: "Bb", B: "B" };
@@ -44,6 +44,12 @@ export function transposeChord({ name, semitones }: { name: string; semitones: n
   if (!p) return name;
   const bass = p.bass ? `/${shift(p.bass, semitones)}` : "";
   return `${shift(p.root, semitones)}${p.quality}${bass}`;
+}
+
+/** The pitch class (C = 0 … B = 11) of a chord's or key's root, or null if it is not a chord name. */
+export function rootPitchClass(name: string): number | null {
+  const p = parseName(name);
+  return p ? NOTES.indexOf(p.root) : null;
 }
 
 export function transposeKey({ key, semitones }: { key: string; semitones: number }): string {

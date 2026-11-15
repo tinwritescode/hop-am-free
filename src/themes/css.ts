@@ -13,12 +13,15 @@ function declarations(t: ModeTokens): string {
   return [`color-scheme:${t.colorScheme}`, ...base, ...scene].join(";");
 }
 
-/** The stylesheet that turns `<html data-skin data-mode>` into CSS custom properties. */
+/**
+ * The stylesheet that turns `<html data-skin data-mode>` into CSS custom properties. A `data-mode` on any element inside
+ * gives that part of the page the other mode's colours (the projector view is always night).
+ */
 export function skinCss(skins: readonly Pick<Skin, "id" | "tokens">[]): string {
   return skins
     .flatMap(({ id, tokens }) => {
       const root = `:root[data-skin="${value(id)}"]`;
-      return [`${root}{--cursor:${value(tokens.cursor)}}`, ...MODES.map((m) => `${root}[data-mode="${m}"]{${declarations(tokens[m])}}`)];
+      return [`${root}{--cursor:${value(tokens.cursor)}}`, ...MODES.map((m) => `${root}[data-mode="${m}"],${root} [data-mode="${m}"]{${declarations(tokens[m])}}`)];
     })
     .join("\n");
 }

@@ -14,8 +14,11 @@ import { artistsOf } from "@/lib/catalog";
 import { breadcrumbJsonLd, pageMeta, songCard, songDescription, songOgPath } from "@/lib/seo";
 import { siteOrigin } from "@/lib/site";
 import { DEFAULT_QUERY, hrefWith, LIST_PATH } from "@/lib/song-list";
+import { parseSetlist, setlistNav, whereInSetlist } from "@/lib/setlist";
+import { SetlistBar } from "@/components/setlist/SetlistBar";
+import { SetlistToggle } from "@/components/setlist/SetlistToggle";
 
-type Props = { params: Promise<{ slug: string }> };
+type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ ds?: string | string[]; "trinh-chieu"?: string | string[] }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const song = await getSong((await params).slug);
@@ -28,10 +31,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 }
 
-export default async function SongPage({ params }: Props) {
-  const [song, user] = await Promise.all([getSong((await params).slug), currentUser()]);
+export default async function SongPage({ params, searchParams }: Props) {
+  const [song, user, query] = await Promise.all([getSong((await params).slug), currentUser(), searchParams]);
   if (!song) notFound();
-  const [rhythms, savedSettings] = await Promise.all([getSongRhythms(song.id), user ? getSettings(user.id) : null]);
+  const slugs = parseSetlist(query.ds);
+  const place = whereInSetlist({ slugs, slug: song.slug });
+  const neighbours = place ? [place.prev, place.next].filter((s) => s !== null) : [];
+  const [rhythms, savedSettings, ...around] = await Promise.all([getSongRhythms(song.id), user ? getSettings(user.id) : null, ...neighbours.map(getSong)]);
+  const titles = new Map(around.flatMap((s) => (s ? [[s.slug, s.title] as const] : [])));
+  const setlist = setlistNav({ slugs, slug: song.slug, titles });
   const origin = siteOrigin();
   const artists = artistsOf(song.artist);
   const trail = [
@@ -47,6 +55,7 @@ export default async function SongPage({ params }: Props) {
         // JSON.stringify escapes quotes; "<" is escaped too so a title can never close the script tag.
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd({ origin, trail })).replace(/</g, "\\u003c") }} />
       )}
+      {setlist && <SetlistBar nav={setlist} />}
       <section className="flex min-w-0 flex-col gap-2 pt-5 pb-5 lg:gap-1 lg:pt-3 lg:pb-3">
         <nav aria-label="Đường dẫn" className="text-sm font-semibold text-soft">
           <Link href={LIST_PATH} className="text-soft hover:text-link">
@@ -78,12 +87,13 @@ export default async function SongPage({ params }: Props) {
             <span className="rounded-md border border-line-strong bg-surface px-2.5 py-0.5 font-mono text-[13px] font-bold text-ink">Tone {song.key}</span>
             <CapoBadge songKey={song.key} capo={song.capo} />
             {song.rhythm && <span className="rounded-md bg-hover px-2.5 py-0.5 text-[13px] font-semibold text-ink">Điệu {song.rhythm}</span>}
+            <SetlistToggle slug={song.slug} title={song.title} />
             <ShareSongButton slug={song.slug} title={song.title} />
           </div>
         </div>
         {user?.isAdmin && <CapoEditor key={`${song.capo?.fret}-${song.capo?.source}`} slug={song.slug} capo={song.capo} />}
       </section>
-      <SongView song={song} rhythms={rhythms} savedSettings={savedSettings} signedIn={user !== null} />
+      <SongView song={song} rhythms={rhythms} savedSettings={savedSettings} signedIn={user !== null} setlist={setlist} present={query["trinh-chieu"] === "1"} />
     </main>
   );
 }

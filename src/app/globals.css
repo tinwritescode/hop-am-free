@@ -184,6 +184,12 @@ input[type="checkbox"] {
     transform: scaleY(0.1);
   }
 }
+/* Snowflakes fall from just above the scene strip to below it, drifting a little. With reduced motion they rest above the strip, out of sight. */
+@keyframes snow {
+  to {
+    transform: translate(18px, 150px);
+  }
+}
 .anim-sway {
   animation: sway 4s ease-in-out infinite;
 }
@@ -196,12 +202,98 @@ input[type="checkbox"] {
 .anim-twinkle {
   animation: twinkle 2.4s infinite;
 }
+.anim-snow {
+  animation: snow 8s linear infinite;
+}
 .anim-bob {
   animation: bob 2.6s ease-in-out infinite;
 }
 .anim-blink {
   animation: blink 4s infinite;
   transform-origin: 40px 58px;
+}
+
+/* The header lantern lights up on page open, then its note and tassel draw themselves in. Plays once per load: the header stays across navigations. */
+@keyframes logo-light {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+}
+@keyframes logo-stroke {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+.logo-draw .logo-glow {
+  transform-origin: 30px 36px;
+  animation: logo-light 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.logo-draw path {
+  stroke-dasharray: 1;
+  animation: logo-stroke 0.7s ease-out 0.35s both;
+}
+
+/* Mầm at rest beside text: a slow sway from the feet, the sprout waving from its root. */
+@keyframes idle {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-2px) rotate(-2.5deg);
+  }
+  70% {
+    transform: translateY(-1px) rotate(2.5deg);
+  }
+}
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: rotate(-8deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+.anim-idle {
+  animation: idle 3.6s ease-in-out infinite;
+  transform-origin: 50% 100%;
+}
+.anim-wiggle {
+  animation: wiggle 2.4s ease-in-out infinite;
+  transform-origin: 40px 16px;
+}
+
+/* "Working…": three dots hop in turn. */
+@keyframes hop {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+.loading-dots {
+  display: inline-flex;
+  gap: 3px;
+}
+.loading-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: hop 1.1s ease-in-out infinite;
+}
+.loading-dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.loading-dots i:nth-child(3) {
+  animation-delay: 0.3s;
 }
 
 /* Mầm's "busy" pose (page loading): trots in place, feet stepping in turn, lantern swinging. One stride is 1s. */
@@ -245,6 +337,10 @@ input[type="checkbox"] {
 }
 .skeleton {
   background-color: color-mix(in srgb, var(--line) 65%, transparent);
+}
+/* The same sweep over a surface that keeps its own colour, such as Mầm's banner while it works. */
+.skeleton,
+.sweep {
   background-image: linear-gradient(90deg, transparent, var(--glow), transparent);
   background-size: 50% 100%;
   background-repeat: no-repeat;

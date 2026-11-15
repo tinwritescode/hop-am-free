@@ -14,7 +14,8 @@
     "cli": "node cli/hopamfree.mts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.mts",
-    "db:backfill-capo": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/backfill-capo.mts"
+    "db:backfill-capo": "tsx --conditions=react-server --env-file-if-exists=.env.local scripts/backfill-capo.mts",
+    "lottie": "tsx --tsconfig scripts/tsconfig.lottie.json scripts/lottie.mts"
   },
   "dependencies": {
     "@tombatossals/chords-db": "^0.5.1",
@@ -22,6 +23,7 @@
     "@workos-inc/node": "^12.2.0",
     "cheerio": "^1.2.0",
     "drizzle-orm": "^0.45.4",
+    "lottie-web": "5.13.0",
     "marked": "^16.4.2",
     "next": "15.5.29",
     "openai": "^7.56.0",

@@ -1,6 +1,7 @@
 "use client";
 
 import { ChordDiagram } from "@/components/ChordDiagram";
+import { playEffect } from "@/components/fx/playEffect";
 import { Mascot } from "@/components/Mascot";
 import { DIFFICULTY_LABEL, difficultyOf, handHint, midiOf, tabOf, type Difficulty, type Position } from "@/lib/chords";
 import type { Substitution, TourStep } from "@/lib/ai-schema";
@@ -137,15 +138,17 @@ export function ChordTile({ chord, on, onPick, scale = 0.5 }: { chord: RailChord
 
 export function TourCta({ onStart }: { onStart: () => void }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-lg bg-bar py-3.5 pr-4 pl-2.5 text-bar-ink">
-      <Mascot size={60} className="shrink-0" />
-      <div className="min-w-0 flex-1">
-        <p className="font-serif text-[17px] font-normal">Học bài này cùng Mầm</p>
-        <p className="text-[13px] leading-normal text-bar-ink/80">Vòng hợp âm, chỗ hay, chỗ khó</p>
+    <div className="flex items-center gap-3 rounded-lg bg-bar py-3.5 pr-4 pl-3 text-bar-ink">
+      <Mascot size={84} className="shrink-0" />
+      <div className="flex min-w-0 flex-1 flex-col items-start gap-2">
+        <div>
+          <p className="font-serif text-[17px] leading-snug font-normal">Học bài này cùng Mầm</p>
+          <p className="text-[13px] leading-normal text-bar-ink/80">Vòng hợp âm, chỗ hay, chỗ khó</p>
+        </div>
+        <button type="button" onClick={onStart} className="fx h-10 rounded-full bg-accent px-4 text-sm font-extrabold text-on-accent">
+          Bắt đầu
+        </button>
       </div>
-      <button type="button" onClick={onStart} className="fx h-11 rounded-full bg-accent px-4 text-sm font-extrabold text-on-accent">
-        Bắt đầu
-      </button>
     </div>
   );
 }
@@ -217,7 +220,11 @@ export function TourCard({
             </button>
             <button
               type="button"
-              onClick={() => (step === steps.length - 1 ? onClose() : onStep(step + 1))}
+              onClick={(e) => {
+                if (step < steps.length - 1) return onStep(step + 1);
+                playEffect({ effect: "confetti", from: e.currentTarget });
+                onClose();
+              }}
               className="h-11 flex-1 rounded-full bg-bar-ink px-4 text-sm font-extrabold text-bar"
             >
               {step === steps.length - 1 ? "Xong" : "Tiếp"}

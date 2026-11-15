@@ -1,17 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { z } from "zod";
 import { Mascot } from "@/components/Mascot";
 import { playPattern, type Playback } from "@/lib/audio";
-import { countLabels, RhythmPatternSchema, type SongRhythm, type Stroke } from "@/lib/rhythm";
+import { countLabels, type SongRhythm, type Stroke } from "@/lib/rhythm";
+import type { RhythmsLoad } from "./useRhythms";
 
-const RhythmsResponse = z.union([
-  z.object({ rhythms: z.array(z.intersection(RhythmPatternSchema, z.object({ slug: z.string(), reason: z.string() }))) }),
-  z.object({ error: z.string() }),
-]);
-
-const STROKE_VIEW: Record<Stroke, { glyph: string; title: string; tone: string }> = {
+export const STROKE_VIEW: Record<Stroke, { glyph: string; title: string; tone: string }> = {
   D: { glyph: "↓", title: "Quạt xuống", tone: "bg-link text-surface" },
   U: { glyph: "↑", title: "Quạt lên", tone: "bg-hover text-link ring-1 ring-link ring-inset" },
   B: { glyph: "B", title: "Ngón cái gảy bass", tone: "bg-bar text-bar-ink" },
@@ -22,28 +17,8 @@ const STROKE_VIEW: Record<Stroke, { glyph: string; title: string; tone: string }
   "-": { glyph: "·", title: "Nghỉ", tone: "bg-bg text-soft" },
 };
 
-type Load = { status: "loading" } | { status: "error"; message: string } | { status: "ready"; rhythms: SongRhythm[] };
-
-export function RhythmPanel({ slug, initial, chordName, midi }: { slug: string; initial: SongRhythm[]; chordName: string; midi: number[] | null }) {
-  const [load, setLoad] = useState<Load>(initial.length ? { status: "ready", rhythms: initial } : { status: "loading" });
+export function RhythmPanel({ load, onRetry, chordName, midi }: { load: RhythmsLoad; onRetry: () => void; chordName: string; midi: number[] | null }) {
   const [open, setOpen] = useState<string | null>(null);
-
-  const fetchRhythms = async () => {
-    setLoad({ status: "loading" });
-    try {
-      const res = RhythmsResponse.parse(await fetch(`/api/songs/${encodeURIComponent(slug)}/rhythms`, { method: "POST" }).then((r) => r.json()));
-      setLoad("error" in res ? { status: "error", message: res.error } : { status: "ready", rhythms: res.rhythms });
-    } catch {
-      setLoad({ status: "error", message: "Mầm chưa chọn được điệu, thử lại sau nhé" });
-    }
-  };
-  const asked = useRef(false);
-  useEffect(() => {
-    if (initial.length || asked.current) return;
-    asked.current = true;
-    void fetchRhythms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- ask once per page view
-  }, []);
 
   const rhythms = load.status === "ready" ? load.rhythms : [];
   const current = rhythms.find((r) => r.slug === open) ?? null;
@@ -56,7 +31,7 @@ export function RhythmPanel({ slug, initial, chordName, midi }: { slug: string; 
         {load.status === "error" && (
           <span className="text-sm text-warn">
             {load.message}{" "}
-            <button type="button" onClick={() => void fetchRhythms()} className="font-extrabold underline">
+            <button type="button" onClick={onRetry} className="font-extrabold underline">
               Thử lại
             </button>
           </span>

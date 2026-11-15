@@ -7,10 +7,10 @@ import { BASE_TOKENS } from "./types";
 describe("skinCss", () => {
   const css = skinCss(SKINS);
 
-  it.each(SKINS)("emits one rule per mode for $name, keyed off data-skin and data-mode on <html>", ({ id, tokens }) => {
+  it.each(SKINS)("emits one rule per mode for $name, keyed off data-skin and data-mode on <html> or on a part of the page", ({ id, tokens }) => {
     expect(css).toContain(`:root[data-skin="${id}"]{--cursor:`);
-    expect(css).toContain(`:root[data-skin="${id}"][data-mode="day"]{color-scheme:light;--bg:${tokens.day.base.bg};`);
-    expect(css).toContain(`:root[data-skin="${id}"][data-mode="night"]{color-scheme:dark;--bg:${tokens.night.base.bg};`);
+    expect(css).toContain(`:root[data-skin="${id}"][data-mode="day"],:root[data-skin="${id}"] [data-mode="day"]{color-scheme:light;--bg:${tokens.day.base.bg};`);
+    expect(css).toContain(`:root[data-skin="${id}"][data-mode="night"],:root[data-skin="${id}"] [data-mode="night"]{color-scheme:dark;--bg:${tokens.night.base.bg};`);
   });
 
   it.each(SKINS)("emits every base token and the scene tokens for both modes of $name", ({ id }) => {

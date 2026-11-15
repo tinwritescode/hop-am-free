@@ -1,0 +1,5 @@
+{
+  "//": "Next keeps JSX as-is; the Lottie generator renders the mascot in plain Node, so it compiles JSX itself.",
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "jsx": "react-jsx" }
+}
