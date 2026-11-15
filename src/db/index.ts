@@ -3,12 +3,15 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { z } from "zod";
 import * as schema from "./schema";
+import { pgSsl } from "@/lib/pg";
 
 const Env = z.object({ DATABASE_URL: z.string().min(1) });
 
+export const databaseUrl = () => Env.parse(process.env).DATABASE_URL;
+
 function connect() {
-  const { DATABASE_URL } = Env.parse(process.env);
-  return drizzle(postgres(DATABASE_URL, { ssl: "require", max: 5 }), { schema });
+  const url = databaseUrl();
+  return drizzle(postgres(url, { ssl: pgSsl(url), max: 5 }), { schema });
 }
 
 // One pool per server process; dev hot reload would otherwise open a new pool on every edit.

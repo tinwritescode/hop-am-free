@@ -21,8 +21,11 @@ const HELP = `hopamfree <command> [options]
   search [query]         Find songs already on the site (duplicate check)
   import <link>          Crawl a chord page; prints a song draft as JSON
   create <file|->        Publish a draft JSON (from import, edited) and print its path
+  import-batch <file|->  Queue many links (one per line) to crawl and publish in the background
+  jobs <batchId> [--watch]  Show a batch's progress and each link's result
+  retry <batchId>        Re-queue the batch's failed imports
 
-Options: --url <base> (or HOPAMFREE_URL), --help`;
+Options: --url <base> (or HOPAMFREE_URL), --watch, --help`;
 
 const Config = z.object({ url: z.string(), token: z.string(), email: z.string() });
 type Config = z.infer<typeof Config>;
@@ -121,10 +124,26 @@ async function readDraft(source: string): Promise<unknown> {
   return wrapped.success ? wrapped.data.draft : json;
 }
 
+const Batch = z.object({
+  progress: z.object({ total: z.number(), done: z.number(), counts: z.record(z.string(), z.number()) }),
+  jobs: z.array(z.unknown()),
+});
+
+async function watchBatch({ base, token, batchId, watch }: { base: string; token: string; batchId: string; watch: boolean }) {
+  const path = `/api/jobs?batch=${encodeURIComponent(batchId)}`;
+  for (;;) {
+    const { data } = await call({ base, path, token, schema: Batch });
+    const { total, done, counts } = data.progress;
+    if (!watch || done >= total) return print(data);
+    say(`${done}/${total} xong (đang chạy ${counts.active ?? 0}, chờ ${(counts.created ?? 0) + (counts.retry ?? 0)}, lỗi ${counts.failed ?? 0})`);
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+}
+
 async function main() {
   const { values, positionals } = parseArgs({
     allowPositionals: true,
-    options: { url: { type: "string" }, "no-browser": { type: "boolean" }, help: { type: "boolean", short: "h" } },
+    options: { url: { type: "string" }, "no-browser": { type: "boolean" }, watch: { type: "boolean", short: "w" }, help: { type: "boolean", short: "h" } },
   });
   const [command, arg] = positionals;
   const config = await loadConfig();
@@ -156,6 +175,32 @@ async function main() {
       const { data } = await call({ base, path: "/api/songs", token, body: await readDraft(arg), schema: z.object({ slug: z.string(), path: z.string() }) });
       say(`Đã đăng: ${base}${data.path} (AI đang gợi ý điệu ở nền)`);
       return print({ ...data, url: `${base}${data.path}` });
+    }
+    case "import-batch": {
+      if (!arg) throw new Error("Cần file danh sách link (hoặc - cho stdin): hopamfree import-batch links.txt");
+      const { token } = await requireConfig(base);
+      const text = arg === "-" ? await readAll(process.stdin) : await readFile(arg, "utf8");
+      const { data } = await call({
+        base,
+        path: "/api/jobs",
+        token,
+        body: { urls: text.split("\n") },
+        schema: z.object({ batchId: z.string(), jobs: z.array(z.object({ url: z.string(), id: z.string().nullable() })), invalid: z.array(z.string()) }),
+      });
+      const skipped = data.jobs.filter((j) => j.id === null).length;
+      say(`Đã xếp ${data.jobs.length - skipped} link vào hàng đợi${skipped ? `, ${skipped} link đang chạy sẵn nên bỏ qua` : ""}${data.invalid.length ? `, ${data.invalid.length} dòng không phải link` : ""}.`);
+      say(`Theo dõi: hopamfree jobs ${data.batchId} --watch`);
+      return print(data);
+    }
+    case "jobs": {
+      if (!arg) throw new Error("Cần batchId: hopamfree jobs <batchId> [--watch]");
+      const { token } = await requireConfig(base);
+      return watchBatch({ base, token, batchId: arg, watch: Boolean(values.watch) });
+    }
+    case "retry": {
+      if (!arg) throw new Error("Cần batchId: hopamfree retry <batchId>");
+      const { token } = await requireConfig(base);
+      return print((await call({ base, path: "/api/jobs/retry", token, body: { batchId: arg }, schema: z.object({ retried: z.number() }) })).data);
     }
     default:
       say(HELP);

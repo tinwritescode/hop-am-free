@@ -29,6 +29,20 @@ To publish songs an admin asked for:
 
 Only publish songs the admin asked for, and respect the source site's terms and copyright.
 
+## Many links at once (job queue)
+
+For more than a few links, queue them instead of importing one by one. The server crawls, cleans and publishes each link in the background.
+
+1. **Queue the batch.** Put one link per line in a file (blank lines and `# comments` are skipped), then run `hopamfree import-batch links.txt`, or call `POST /api/jobs`. Keep the `batchId` it prints.
+   - Each link is queued at most once at a time. A link that is already queued or running from an earlier batch comes back with `"id": null` and is not queued again.
+   - A batch holds at most 200 links.
+2. **Watch it.** Run `hopamfree jobs <batchId> --watch`, or poll `GET /api/jobs?batch=<batchId>`. Admins can also watch it on `/admin/jobs`.
+3. **Read each job's result.** A job in state `completed` has an `outcome`:
+   - `{"kind": "published", "slug"}`: the song is live at `/bai-hat/<slug>`.
+   - `{"kind": "duplicate", "slug"}`: this link was already published; nothing changed.
+   - `{"kind": "review", "reason", "draft", "unknownChords"}`: the draft was held back, because it has chords the site cannot draw or the site rejected a field. Fix `draft` as in step 4 above and publish it with `hopamfree create`, or open the "Sửa nháp" link on `/admin/jobs`.
+4. **Handle failures.** Fetch and AI errors are retried automatically, 3 times with growing delays; meanwhile the job's state is `retry` and `error` says why. A job that is still failing after that ends in state `failed`. Run `hopamfree retry <batchId>`, or call `POST /api/jobs/retry`, to queue the batch's failed jobs again.
+
 ## Song draft
 
 The server validates every draft:
@@ -76,6 +90,9 @@ The CLI writes data as JSON to stdout and messages to stderr. It exits with 0 on
 | `search [query]` | Searches published songs by title, artist, composer, or exact chord. No sign-in needed. |
 | `import <link>` | Crawls the page and asks the AI to clean it into a draft. Prints `{draft, unknownChords}`. Takes about 30 s and publishes nothing. |
 | `create <file\|->` | Publishes a draft and prints `{slug, path, url}`. Accepts the whole `import` output or a bare draft. |
+| `import-batch <file\|->` | Queues one link per line. Prints `{batchId, jobs: [{url, id}], invalid}`. |
+| `jobs <batchId> [--watch]` | Prints `{progress, jobs}` for a batch. With `--watch`, it reports progress on stderr every 5 s and prints the result once every job is done. |
+| `retry <batchId>` | Queues the batch's failed jobs again. Prints `{retried}`. |
 | `logout` | Deletes the local token. It does not revoke the token; do that on `/cli`. |
 
 Sign-in steps:
@@ -118,6 +135,11 @@ Send the token as `Authorization: Bearer haf_…`. The admin can see and revoke 
 | `GET /api/songs?q=<query>` | none | – | `{songs: [{slug, title, artist, key, sourceUrl, path}]}`, at most 50 |
 | `POST /api/import` | admin token | `{url}` | `{draft, unknownChords}`, or 409, 422 or 502 |
 | `POST /api/songs` | admin token | a draft | 201 `{slug, path}`, or 400 or 409 |
+| `POST /api/jobs` | admin token | `{urls: string[]}`, raw lines | 202 `{batchId, jobs: [{url, id}], invalid}`, or 400 |
+| `GET /api/jobs?batch=<batchId>` | admin token | – | `{progress: {total, done, counts}, jobs: [{id, state, label, outcome, error, retryCount, retryLimit, createdOn, completedOn}]}` |
+| `POST /api/jobs/retry` | admin token | `{batchId}` | `{retried}` |
+
+A job's `state` is one of `created` (waiting), `active`, `retry` (waiting to try again), `completed`, `failed` or `cancelled`. For an import job, `label` is its link.
 
 ```sh
 TOKEN=haf_…
