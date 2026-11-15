@@ -4,11 +4,13 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useLook } from "@/components/look/LookProvider";
+import { FINGERSTYLE_PATH } from "@/fingerstyle/path";
 import { LIST_PATH } from "@/lib/song-list";
 
 const ICON = { width: 16, height: 16, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round", "aria-hidden": true } as const;
 
-type Category = { href: string; label: string; icon: React.ReactNode; current: (pathname: string) => boolean };
+/** `phone: false` keeps an item off the 375px row, which has room for five; the home page links it instead. */
+type Category = { href: string; label: string; icon: React.ReactNode; current: (pathname: string) => boolean; phone?: false };
 
 const CATEGORIES: Category[] = [
   {
@@ -55,7 +57,8 @@ const CATEGORIES: Category[] = [
         <circle cx="12" cy="11.5" r="1.6" fill="currentColor" />
       </svg>
     ),
-  },  {
+  },
+  {
     href: "/len-day",
     label: "Lên dây",
     current: (p) => p === "/len-day",
@@ -66,6 +69,17 @@ const CATEGORIES: Category[] = [
       </svg>
     ),
   },
+  {
+    href: FINGERSTYLE_PATH,
+    label: "Fingerstyle",
+    current: (p) => p === FINGERSTYLE_PATH || p.startsWith(`${FINGERSTYLE_PATH}/`),
+    phone: false,
+    icon: (
+      <svg {...ICON}>
+        <path d="M7 21v-7l-2-3V6a1.5 1.5 0 0 1 3 0v4M8 10V4a1.5 1.5 0 0 1 3 0v6M11 9.5V5a1.5 1.5 0 0 1 3 0v5M14 9.5a1.5 1.5 0 0 1 3 0V15l-3 6" />
+      </svg>
+    ),
+  },
 ];
 
 export function CategoryNav() {
@@ -73,7 +87,7 @@ export function CategoryNav() {
   return (
     <nav aria-label="Danh mục" className="flex flex-wrap">
       {CATEGORIES.map((c) => (
-        <Link key={c.href} href={c.href} aria-current={c.current(pathname) ? "page" : undefined} className="flex h-11 items-center gap-1.5 px-2 sm:px-2.5">
+        <Link key={c.href} href={c.href} aria-current={c.current(pathname) ? "page" : undefined} className={`flex h-11 items-center gap-1.5 px-2 sm:px-2.5 ${c.phone === false ? "max-sm:hidden" : ""}`}>
           {/* Icons drop below sm so all four items share one row at 375px, as the old three did. */}
           <span className="hidden sm:contents">{c.icon}</span>
           {c.label}

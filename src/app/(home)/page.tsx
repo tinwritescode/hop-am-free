@@ -8,6 +8,7 @@ import { strumGlyph } from "@/lib/strum";
 import { ArtistCard, SectionHead } from "@/components/home/ArtistCard";
 import { PlayableCard } from "@/components/home/PlayableCard";
 import { SongRow } from "@/components/home/SongRow";
+import { FINGERSTYLE_PATH } from "@/fingerstyle/path";
 
 // The site name already leads the title, so it skips the "| Hợp Âm Free" template.
 export const metadata: Metadata = { ...pageMeta({ title: HOME_TITLE, description: HOME_DESCRIPTION, path: "/" }), title: { absolute: HOME_TITLE } };
@@ -101,6 +102,11 @@ export default async function Home() {
           ))}
         </div>
       </section>
+
+      <Link href={FINGERSTYLE_PATH} className="card flex flex-col gap-1 rounded-xl border border-line bg-surface px-4 py-3.5 text-ink no-underline">
+        <span className="font-serif text-xl">Học fingerstyle</span>
+        <span className="text-sm text-soft">Nghe tab thành tiếng đàn, xem từng nốt trên cần đàn và ngón nào gảy. Chỉnh chậm, lặp từng đoạn.</span>
+      </Link>
 
       <Link
         href={LIST_PATH}

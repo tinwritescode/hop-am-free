@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { searchSummaries } from "@/db/songs";
 import { tally } from "@/lib/catalog";
+import { FINGERSTYLE_PATH, SONGS as FINGERSTYLE_SONGS } from "@/fingerstyle";
 import { siteOrigin } from "@/lib/site";
 import { DEFAULT_QUERY, hrefWith, LIST_PATH } from "@/lib/song-list";
 
@@ -15,6 +16,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     LIST_PATH,
     "/ca-si",
     "/len-day",
+    FINGERSTYLE_PATH,
+    ...FINGERSTYLE_SONGS.map((s) => `${FINGERSTYLE_PATH}/${s.slug}`),
     ...songs.map((s) => `${LIST_PATH}/${s.slug}`),
     ...tally(songs.flatMap((s) => s.artists)).map((a) => hrefWith(DEFAULT_QUERY, { artist: a.name })),
   ];
