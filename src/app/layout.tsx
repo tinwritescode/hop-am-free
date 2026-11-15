@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const jar = await cookies();
   const prefs = parsePrefs({
-    raw: { mode: jar.get(PREF_COOKIE.mode)?.value, skin: jar.get(PREF_COOKIE.skin)?.value, glow: jar.get(PREF_COOKIE.glow)?.value },
+    raw: { mode: jar.get(PREF_COOKIE.mode)?.value, skin: jar.get(PREF_COOKIE.skin)?.value, glow: jar.get(PREF_COOKIE.glow)?.value, sound: jar.get(PREF_COOKIE.sound)?.value },
     isSkin: isSkinId,
     defaultSkin: DEFAULT_SKIN_ID,
   });

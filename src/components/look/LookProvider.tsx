@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useLayoutEffect, useMemo, useState } from "react";
 import { PREF_COOKIE, prefCookie, type Mode, type Prefs } from "@/lib/prefs";
+import { setSfxOn } from "@/lib/sfx";
 import { skinById, type SkinId } from "@/themes";
 import type { Skin } from "@/themes/types";
 
@@ -14,6 +15,7 @@ type Look = {
   followMode: (mode: Mode) => void;
   setSkin: (skin: SkinId) => void;
   setGlow: (on: boolean) => void;
+  setSound: (on: boolean) => void;
 };
 
 const LookContext = createContext<Look | null>(null);
@@ -23,7 +25,7 @@ function writeCookie({ name, value }: { name: string; value: string }) {
 }
 
 /**
- * The visitor's day/night mode, skin and glow toggle. The server renders <html data-*> from the cookies,
+ * The visitor's day/night mode, skin, glow and sound toggles. The server renders <html data-*> from the cookies,
  * so the first paint is already right; changes here update the attributes and cookies in place, without a reload.
  * Each setter saves only its own cookie, so a missing mode cookie keeps meaning "not chosen yet".
  */
@@ -36,7 +38,8 @@ export function LookProvider({ initial, children }: { initial: Prefs<SkinId>; ch
     root.dataset.mode = prefs.mode;
     root.dataset.skin = prefs.skin;
     root.dataset.glow = prefs.glow ? "on" : "off";
-  }, [prefs.mode, prefs.skin, prefs.glow]);
+    setSfxOn(prefs.sound);
+  }, [prefs.mode, prefs.skin, prefs.glow, prefs.sound]);
 
   const setMode = useCallback((mode: Mode) => {
     setPrefs((p) => ({ ...p, mode, modeSaved: true }));
@@ -51,10 +54,15 @@ export function LookProvider({ initial, children }: { initial: Prefs<SkinId>; ch
     setPrefs((p) => ({ ...p, glow }));
     writeCookie({ name: PREF_COOKIE.glow, value: glow ? "on" : "off" });
   }, []);
+  const setSound = useCallback((sound: boolean) => {
+    setSfxOn(sound); // now, not after render, so a sound in the same tap already obeys it
+    setPrefs((p) => ({ ...p, sound }));
+    writeCookie({ name: PREF_COOKIE.sound, value: sound ? "on" : "off" });
+  }, []);
 
   const look = useMemo<Look>(
-    () => ({ prefs, skin: skinById(prefs.skin), setMode, followMode, setSkin, setGlow }),
-    [prefs, setMode, followMode, setSkin, setGlow],
+    () => ({ prefs, skin: skinById(prefs.skin), setMode, followMode, setSkin, setGlow, setSound }),
+    [prefs, setMode, followMode, setSkin, setGlow, setSound],
   );
   return <LookContext.Provider value={look}>{children}</LookContext.Provider>;
 }

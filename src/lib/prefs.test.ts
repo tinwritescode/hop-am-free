@@ -4,17 +4,17 @@ import { parsePrefs, prefCookie, PREF_COOKIE } from "./prefs";
 const isSkin = (v: string): v is "hoian" | "dalat" => v === "hoian" || v === "dalat";
 
 describe("parsePrefs", () => {
-  it("defaults to day, the default skin and glow off when nothing is stored", () => {
-    expect(parsePrefs({ raw: {}, isSkin, defaultSkin: "hoian" })).toEqual({ mode: "day", modeSaved: false, skin: "hoian", glow: false });
+  it("defaults to day, the default skin, glow off and sound on when nothing is stored", () => {
+    expect(parsePrefs({ raw: {}, isSkin, defaultSkin: "hoian" })).toEqual({ mode: "day", modeSaved: false, skin: "hoian", glow: false, sound: true });
   });
 
   it("reads valid stored values", () => {
-    expect(parsePrefs({ raw: { mode: "night", skin: "dalat", glow: "on" }, isSkin, defaultSkin: "hoian" })).toEqual({ mode: "night", modeSaved: true, skin: "dalat", glow: true });
+    expect(parsePrefs({ raw: { mode: "night", skin: "dalat", glow: "on", sound: "off" }, isSkin, defaultSkin: "hoian" })).toEqual({ mode: "night", modeSaved: true, skin: "dalat", glow: true, sound: false });
   });
 
   it("falls back per field when a stored value is unknown or stale", () => {
-    expect(parsePrefs({ raw: { mode: "dusk", skin: "christmas", glow: "yes" }, isSkin, defaultSkin: "hoian" })).toEqual({ mode: "day", modeSaved: false, skin: "hoian", glow: false });
-    expect(parsePrefs({ raw: { mode: "night", skin: "christmas" }, isSkin, defaultSkin: "hoian" })).toEqual({ mode: "night", modeSaved: true, skin: "hoian", glow: false });
+    expect(parsePrefs({ raw: { mode: "dusk", skin: "christmas", glow: "yes", sound: "loud" }, isSkin, defaultSkin: "hoian" })).toEqual({ mode: "day", modeSaved: false, skin: "hoian", glow: false, sound: true });
+    expect(parsePrefs({ raw: { mode: "night", skin: "christmas" }, isSkin, defaultSkin: "hoian" })).toEqual({ mode: "night", modeSaved: true, skin: "hoian", glow: false, sound: true });
   });
 });
 

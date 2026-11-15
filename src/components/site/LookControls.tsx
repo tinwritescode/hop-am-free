@@ -1,15 +1,28 @@
 "use client";
 
 import { useLook } from "@/components/look/LookProvider";
+import { sfx } from "@/lib/sfx";
 import { isSkinId, SKINS, UPCOMING_SKINS } from "@/themes";
 
 export function LookControls() {
-  const { prefs, setGlow, setSkin } = useLook();
+  const { prefs, setGlow, setSkin, setSound } = useLook();
   return (
     <>
       <label className="flex min-h-11 items-center gap-2 pointer-coarse:hidden">
         <input type="checkbox" checked={prefs.glow} onChange={(e) => setGlow(e.target.checked)} className="size-[18px]" />
         Ánh sáng theo chuột
+      </label>
+      <label className="flex min-h-11 items-center gap-2">
+        <input
+          type="checkbox"
+          checked={prefs.sound}
+          onChange={(e) => {
+            setSound(e.target.checked);
+            sfx("pop");
+          }}
+          className="size-[18px]"
+        />
+        Âm thanh
       </label>
       <label className="flex items-center gap-2">
         Giao diện

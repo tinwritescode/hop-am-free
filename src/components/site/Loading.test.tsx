@@ -14,7 +14,7 @@ import { SKINS, type SkinId } from "@/themes";
 function render({ Loading, skin = "hoian" }: { Loading: () => React.ReactNode; skin?: SkinId }) {
   return load(
     renderToStaticMarkup(
-      <LookProvider initial={{ mode: "night", modeSaved: true, skin, glow: false }}>
+      <LookProvider initial={{ mode: "night", modeSaved: true, skin, glow: false, sound: true }}>
         <Loading />
       </LookProvider>,
     ),
