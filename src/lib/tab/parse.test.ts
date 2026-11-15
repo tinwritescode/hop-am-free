@@ -124,6 +124,37 @@ describe("parseTab", () => {
     ]);
   });
 
+  it("writes out a part marked x2 after its bar line, including one of two parts printed side by side", () => {
+    const tab = parseTab(
+      [
+        "e|------|    |----|",
+        "B|------|    |----|",
+        "G|-7-6--| x2 |-5--|",
+        "D|-5----|    |----|",
+        "A|------|    |----|",
+        "E|------|    |----|",
+      ].join("\n"),
+    );
+    const notes = tab.steps.flatMap((s) => s.notes.map((n) => [s.at, n.string, n.kind === "fret" ? n.fret : "x"]));
+    // No dead note or fret 2 from the "x2": the first part sounds twice, then the second part.
+    expect(notes).toEqual([
+      [1, 2, 5],
+      [1, 3, 7],
+      [3, 3, 6],
+      [8, 2, 5],
+      [8, 3, 7],
+      [10, 3, 6],
+      [20, 3, 5],
+    ]);
+    expect(tab.systems[0].bars).toEqual([6, 13, 18, 23]);
+  });
+
+  it("writes out a whole block marked x4 at its end", () => {
+    const tab = parseTab(["e|---|", "B|---|", "G|---|", "D|-5-| x4", "A|---|", "E|---|"].join("\n"));
+    expect(tab.steps.map((s) => s.at)).toEqual([1, 5, 9, 13]);
+    expect(tab.length).toBe(16);
+  });
+
   it("reads nothing from text that holds no tab", () => {
     expect(parseTab("Just some words\n| x   Dead note")).toEqual({ steps: [], systems: [], sections: [], capos: [], length: 0 });
   });

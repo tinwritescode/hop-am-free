@@ -25,6 +25,8 @@ const STRING_LINE = /^[A-Ga-g][#b]?\s*\|/;
 /** The end of a too-long block, printed under it without string names. */
 const OVERFLOW = /^[-\dxXhp/\\|~]*-[-\dxXhp/\\|~]*$/;
 const HEADER = /^\[(.+)\]$/;
+/** "| x4" after a bar line: play the part that ends there four times. */
+const REPEAT = /\|\s*[xX](\d+)(?=\s|\||$)/;
 const THUMP = /(?<![A-Za-z])o(?![A-Za-z])/g;
 const CAPO = /Capo\s*(\d+)/gi;
 const VIA = new Map<string, Technique>([
@@ -33,6 +35,25 @@ const VIA = new Map<string, Technique>([
   ["/", "slide-up"],
   ["\\", "slide-down"],
 ]);
+
+/**
+ * Writes out each part marked "| xN" N times, so the tab shown and played holds every pass. A part runs back from its
+ * bar line to the start of the block or to the gap before it, when parts are printed side by side.
+ */
+function expandRepeats(lines: string[]): string[] {
+  const width = Math.max(...lines.map((l) => l.length));
+  let rows = lines.map((l) => l.padEnd(width));
+  for (;;) {
+    const r = rows.findIndex((row) => REPEAT.test(row));
+    const hit = r < 0 ? null : REPEAT.exec(rows[r]);
+    if (!hit) return rows.map((row) => row.trimEnd());
+    const bar = hit.index;
+    const row = rows[r];
+    rows[r] = row.slice(0, bar + 1) + " ".repeat(hit[0].length - 1) + row.slice(bar + hit[0].length);
+    const start = Math.max(...rows.map((l) => l.lastIndexOf(" ", bar) + 1));
+    rows = rows.map((l) => l.slice(0, bar + 1) + l.slice(start, bar + 1).repeat(Number(hit[1]) - 1) + l.slice(bar + 1));
+  }
+}
 
 type Block = { section: string | null; above: string | null; prefix: number; rows: string[] };
 
@@ -58,7 +79,7 @@ function blocksOf(lines: readonly string[]): Block[] {
     if (wraps) overflow.forEach((l, r) => (rows[r] += l.trim()));
     const prev = i > 0 ? lines[i - 1] : "";
     const above = prev.trim() && !HEADER.test(prev.trim()) ? prev : null;
-    blocks.push({ section, above, prefix, rows });
+    blocks.push({ section, above, prefix, rows: expandRepeats(rows) });
     section = null; // a header names the blocks after it until the next header; null here means "same section"
     i += wraps ? 12 : 6;
   }
