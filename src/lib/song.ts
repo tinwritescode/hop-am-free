@@ -7,8 +7,9 @@ import { fold } from "./text";
 /** What an admin fills in (or an import pre-fills) to create a song. */
 export const SongDraftSchema = z.object({
   title: z.string().trim().min(1).max(120),
-  artist: z.string().trim().min(1).max(120),
-  composer: z.string().trim().max(120).default(""),
+  // Room for collabs and theme songs that credit a whole cast.
+  artist: z.string().trim().min(1).max(300),
+  composer: z.string().trim().max(300).default(""),
   key: z
     .string()
     .trim()

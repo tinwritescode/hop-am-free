@@ -9,7 +9,9 @@ import { chordsInOrder, sheetForPrompt } from "./chordsheet";
 import { DIFFICULTY_LABEL, difficultyOf, voicingsFor } from "./chords";
 import { AiResultSchema, parseAiOutput, type AiResult, type AiTask } from "./ai-schema";
 import { RhythmSuggestionsSchema, STROKES, TIME_SIGNATURES, type RhythmSuggestion } from "./rhythm";
-import type { PageText } from "./crawl";
+import { chordSheetRegion, type PageText } from "./crawl";
+import { InvalidDraftError, LooseDraftSchema } from "./import-job";
+import { describeIssues } from "./zod-issues";
 import { CapoFretSchema, CapoGuessSchema, parseCapoMention, type Capo, type CapoGuess } from "./capo";
 
 const Env = z.object({ AI_BASE_URL: z.url(), AI_API_KEY: z.string().min(1), AI_MODEL: z.string().min(1) });
@@ -22,24 +24,40 @@ function getClient() {
   return client;
 }
 
-const SYSTEM = `Bạn là "Mầm", trợ giảng guitar thân thiện của trang Hợp Âm Free. Trả lời bằng tiếng Việt, ngắn gọn, cụ thể, dựa trên lý thuyết nhạc đúng.
+export const SYSTEM = `Bạn là "Mầm", trợ giảng guitar thân thiện của trang Hợp Âm Free. Trả lời bằng tiếng Việt, ngắn gọn, cụ thể, dựa trên lý thuyết nhạc đúng.
 Chỉ dùng tên hợp âm dạng chuẩn (C, Am7, Bbmaj7, G/B, Asus4...). Không bịa thông tin về bản thu; khi không chắc, nói là "nên nghe lại bản thu".
 Luôn trả về đúng một object JSON theo mẫu được yêu cầu, không kèm chữ nào khác.`;
 
+/**
+ * The provider's content filter cut the answer off (finish_reason "content_filter", or the gateway's 503 "no content").
+ * Seen when the model copies well-known lyrics; asking the same thing again does not help.
+ */
+class AiRefusedError extends Error {}
+
 async function askJson(prompt: string): Promise<unknown> {
   const { openai, model } = getClient();
-  const res = await openai.chat.completions.create({
-    model,
-    response_format: { type: "json_object" },
-    messages: [
-      { role: "system", content: SYSTEM },
-      { role: "user", content: prompt },
-    ],
-  });
+  const res = await openai.chat.completions
+    .create({
+      model,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: SYSTEM },
+        { role: "user", content: prompt },
+      ],
+    })
+    .catch((err: unknown) => {
+      // The gateway's form of the same refusal: it fires while the model copies lyrics, never on a details-only prompt.
+      if (err instanceof OpenAI.APIError && err.status === 503 && /no content/i.test(err.message)) throw new AiRefusedError(err.message);
+      throw err;
+    });
+  const choice = res.choices[0];
+  const content = choice?.message.content ?? "";
+  if (choice?.finish_reason === "content_filter") throw new AiRefusedError(`AI content filter stopped the answer after ${content.length} chars`);
   try {
-    return JSON.parse(res.choices[0]?.message.content ?? "");
+    return JSON.parse(content);
   } catch {
-    return undefined;
+    // finish_reason "length" means the answer was cut off; an empty answer usually means the gateway gave up.
+    throw new Error(`AI returned no JSON (finish_reason: ${choice?.finish_reason ?? "none"}, ${content.length} chars)`);
   }
 }
 
@@ -115,38 +133,83 @@ Nếu là điệu mới: đặt "slug" kiểu kebab-case không dấu, và "patt
 "reason": vì sao điệu hợp bài này (1 câu).
 JSON: {"rhythms":[{"slug":"ballad","reason":"...","pattern":null},{"slug":"slow-rock","reason":"...","pattern":{"name":"Slow Rock","timeSignature":"12/8","subdivision":1,"bpm":60,"steps":["B","3","2","1","2","3","B","3","2","1","2","3"],"feel":"...","howTo":"..."}}]}`;
   const parsed = RhythmSuggestionsSchema.safeParse(await askJson(prompt));
-  if (!parsed.success) throw new Error("AI rhythm suggestions failed validation");
+  if (!parsed.success) throw new Error(`AI rhythm suggestions failed validation: ${describeIssues(parsed.error)}`);
   return parsed.data.rhythms;
 }
 
 // The model reports a capo only when the page states it, so an extracted capo counts as stated by the sheet.
 const ImportedSchema = SongDraftSchema.omit({ sourceUrl: true, capo: true }).extend({ capo: CapoFretSchema.nullable().default(null) });
+const LooseImportedSchema = LooseDraftSchema.omit({ sourceUrl: true, capo: true }).extend({ capo: CapoFretSchema.nullable().catch(null) });
+
+const FIELD_RULES = `"key" là tone gốc dạng C, Am, F#m, Bb. "artist" là ca sĩ; "composer" là người sáng tác ("" nếu không có). "rhythm" là điệu nếu trang ghi ("" nếu không). "genre" là thể loại nếu có ("" nếu không).
+"capo" là số ngăn kẹp capo (0–11) CHỈ KHI bản hợp âm hoặc trang ghi rõ, ví dụ "Capo 3", "capo ngăn 3", "kẹp capo 2", "Capo on 2nd fret"; không ghi thì null. Không tự đoán capo, không suy ra từ tone, không lấy từ bình luận của người đọc.`;
+
+const pageBlock = (page: PageText) => `Tiêu đề trang: ${page.title}
+Mô tả: ${page.description}
+Nội dung:
+${page.text}`;
+
+/** The import instructions plus the page; exported so a page that trips the model can be replayed by hand. */
+export const importPrompt = (page: PageText) => `Dưới đây là nội dung một trang web về một bài hát (đã bỏ HTML). Hãy trích ra bản hợp âm guitar và làm sạch nó.
+Quy tắc cho "sheet":
+- Mỗi dòng lời một dòng; hợp âm viết liền trong ngoặc vuông ngay trước chữ được đánh, ví dụ: Để nó [C]đến như lẽ đương [G]nhiên.
+- Chia đoạn bằng dòng tiêu đề "## Tên đoạn" (Intro, Phiên khúc 1, Điệp khúc, Gian tấu, Đoạn chuyển, Outro…) khi nhận ra được.
+- Giữ nguyên lời và hợp âm của bản gốc; chỉ sửa khoảng trắng, chính tả rõ ràng sai, và chuẩn hóa tên hợp âm (A# → Bb, Hm → Bm, Am7/G giữ nguyên).
+- Bỏ hết menu, quảng cáo, bình luận, chữ không thuộc bài hát.
+${FIELD_RULES}
+JSON: {"title":"...","artist":"...","composer":"...","key":"Am","genre":"","rhythm":"","capo":null,"sheet":"## Phiên khúc 1\\nNó như thế [Am]này..."}
+
+${pageBlock(page)}`;
+
+/** Song details only, no lyrics: the answer the content filter lets through when copying the sheet is blocked. */
+const detailsPrompt = (page: PageText) => `Dưới đây là nội dung một trang web về một bài hát (đã bỏ HTML). Chỉ trả về thông tin của bài, KHÔNG chép lời hay hợp âm.
+"title" là tên bài. ${FIELD_RULES}
+JSON: {"title":"...","artist":"...","composer":"...","key":"Am","genre":"","rhythm":"","capo":null}
+
+${pageBlock(page)}`;
+
+const LooseDetailsSchema = LooseImportedSchema.omit({ sheet: true });
+
+/** Whole draft from the model: lyrics, chords and details, cleaned. */
+async function draftFromAi(page: PageText): Promise<z.infer<typeof ImportedSchema>> {
+  const raw = await askJson(importPrompt(page));
+  const parsed = ImportedSchema.safeParse(raw);
+  if (parsed.success) return parsed.data;
+  // Not an object at all: nothing to hand an admin, so let the queue ask again.
+  const partial = LooseImportedSchema.safeParse(raw);
+  if (!partial.success) throw new Error(`AI import failed validation: ${describeIssues(parsed.error)}`);
+  throw new InvalidDraftError({ reason: `AI trả bản nháp chưa hợp lệ: ${describeIssues(parsed.error)}`, partial: withSheetCapo(partial.data) });
+}
+
+/**
+ * When the content filter stops the model copying the lyrics: take the sheet as the page writes it ([C]-style chords)
+ * and ask the model for the song details only. A page without such chords goes to an admin with its text to trim.
+ */
+async function draftFromPageSheet(page: PageText): Promise<z.infer<typeof ImportedSchema>> {
+  const sheet = chordSheetRegion(page.text);
+  if (!sheet) {
+    const partial = { ...LooseImportedSchema.parse({}), title: page.title, sheet: page.text };
+    throw new InvalidDraftError({ reason: "Bộ lọc nội dung của AI chặn câu trả lời, và trang không ghi hợp âm dạng [C] để tự cắt. Bản nháp là chữ cào được, cần xóa phần thừa", partial: withSheetCapo(partial) });
+  }
+  const raw = await askJson(detailsPrompt(page)).catch((err: unknown) => (err instanceof AiRefusedError ? undefined : Promise.reject(err)));
+  const details = LooseDetailsSchema.safeParse(raw);
+  const candidate = { ...(details.success ? details.data : LooseDetailsSchema.parse({})), sheet };
+  const parsed = ImportedSchema.safeParse(candidate);
+  if (parsed.success) return parsed.data;
+  throw new InvalidDraftError({ reason: `Bản nhạc lấy thẳng từ trang (AI bị bộ lọc nội dung chặn khi chép lời), thông tin bài chưa hợp lệ: ${describeIssues(parsed.error)}`, partial: withSheetCapo(candidate) });
+}
 
 /** Turns crawled page text into a clean draft; cached per URL so re-importing the same link is free. */
 export async function importSong({ url, page }: { url: string; page: PageText }): Promise<Omit<SongDraft, "sourceUrl">> {
   const { capo, ...draft } = await cached({
     key: `import:v2:${url}`,
     schema: ImportedSchema,
-    compute: async () => {
-      const prompt = `Dưới đây là nội dung một trang web về một bài hát (đã bỏ HTML). Hãy trích ra bản hợp âm guitar và làm sạch nó.
-Quy tắc cho "sheet":
-- Mỗi dòng lời một dòng; hợp âm viết liền trong ngoặc vuông ngay trước chữ được đánh, ví dụ: Để nó [C]đến như lẽ đương [G]nhiên.
-- Chia đoạn bằng dòng tiêu đề "## Tên đoạn" (Intro, Phiên khúc 1, Điệp khúc, Gian tấu, Đoạn chuyển, Outro…) khi nhận ra được.
-- Giữ nguyên lời và hợp âm của bản gốc; chỉ sửa khoảng trắng, chính tả rõ ràng sai, và chuẩn hóa tên hợp âm (A# → Bb, Hm → Bm, Am7/G giữ nguyên).
-- Bỏ hết menu, quảng cáo, bình luận, chữ không thuộc bài hát.
-"key" là tone gốc dạng C, Am, F#m, Bb. "artist" là ca sĩ; "composer" là người sáng tác ("" nếu không có). "rhythm" là điệu nếu trang ghi ("" nếu không). "genre" là thể loại nếu có ("" nếu không).
-"capo" là số ngăn kẹp capo (0–11) CHỈ KHI bản hợp âm hoặc trang ghi rõ, ví dụ "Capo 3", "capo ngăn 3", "kẹp capo 2", "Capo on 2nd fret"; không ghi thì null. Không tự đoán capo, không suy ra từ tone, không lấy từ bình luận của người đọc.
-JSON: {"title":"...","artist":"...","composer":"...","key":"Am","genre":"","rhythm":"","capo":null,"sheet":"## Phiên khúc 1\\nNó như thế [Am]này..."}
-
-Tiêu đề trang: ${page.title}
-Mô tả: ${page.description}
-Nội dung:
-${page.text}`;
-      const parsed = ImportedSchema.safeParse(await askJson(prompt));
-      if (!parsed.success) throw new Error("AI import failed validation");
-      return parsed.data;
-    },
+    compute: () => draftFromAi(page).catch((err: unknown) => (err instanceof AiRefusedError ? draftFromPageSheet(page) : Promise.reject(err))),
   });
+  return withSheetCapo({ ...draft, capo });
+}
+
+function withSheetCapo({ capo, ...draft }: z.infer<typeof LooseImportedSchema>): Omit<SongDraft, "sourceUrl"> {
   // The model sometimes drops the capo line while cleaning; the sheet itself may still state it.
   const fret = capo ?? parseCapoMention(draft.sheet);
   return { ...draft, capo: fret === null ? null : ({ fret, source: "sheet" } satisfies Capo) };
@@ -170,7 +233,7 @@ Cách tính: capo = (tone bản thu − tone bản hợp âm) mod 12, tính theo
 - "reason": 1 câu, nêu bản thu nào và tone gì.
 JSON: {"capo":3,"confidence":"medium","soundingKey":"Eb","reason":"..."}`;
       const parsed = CapoGuessSchema.safeParse(await askJson(prompt));
-      if (!parsed.success) throw new Error("AI capo guess failed validation");
+      if (!parsed.success) throw new Error(`AI capo guess failed validation: ${describeIssues(parsed.error)}`);
       return parsed.data;
     },
   });

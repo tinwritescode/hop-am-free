@@ -2,6 +2,7 @@ import { z } from "zod";
 import { requestUser } from "@/db/auth";
 import { findBySourceUrl } from "@/db/songs";
 import { importSong } from "@/lib/ai";
+import { InvalidDraftError } from "@/lib/import-job";
 import { fetchPage } from "@/lib/crawl";
 import { unknownChords } from "@/lib/song";
 
@@ -26,6 +27,10 @@ export async function POST(req: Request) {
     const draft = await importSong({ url, page });
     return Response.json({ draft: { ...draft, sourceUrl: url }, unknownChords: unknownChords(draft.sheet) });
   } catch (err) {
+    if (err instanceof InvalidDraftError) {
+      const draft = { ...err.partial, sourceUrl: url };
+      return Response.json({ draft, unknownChords: unknownChords(draft.sheet), warning: err.reason });
+    }
     console.error("import failed", { url, err: err instanceof Error ? err.message : String(err) });
     return Response.json({ error: "Mầm chưa đọc được bài từ trang này" }, { status: 502 });
   }

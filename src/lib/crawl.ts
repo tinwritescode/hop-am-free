@@ -1,6 +1,7 @@
 import { load } from "cheerio";
 import { lookup } from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
+import { lookupChord } from "./chords";
 
 const MAX_TEXT = 20_000;
 const MAX_BYTES = 3_000_000;
@@ -28,6 +29,25 @@ export function extractPage(html: string): PageText {
     .trim()
     .slice(0, MAX_TEXT);
   return { title, description, text };
+}
+
+const MIN_CHORD_LINES = 4;
+const hasChord = (line: string) => [...line.matchAll(/\[([^\]\s]{1,12})\]/g)].some((m) => lookupChord(m[1]) !== null);
+
+/**
+ * The sheet as the page already writes it, `[Am]`-style chords inline: every line from the first line with a chord
+ * to the last. Null when the page does not write chords that way. Lets an import skip asking the AI to copy lyrics.
+ */
+export function chordSheetRegion(text: string): string | null {
+  const lines = text.split("\n");
+  const chordLines = lines.flatMap((l, i) => (hasChord(l) ? [i] : []));
+  const [first] = chordLines;
+  const last = chordLines.at(-1);
+  if (chordLines.length < MIN_CHORD_LINES || first === undefined || last === undefined) return null;
+  const region = lines.slice(first, last + 1);
+  const blanks = region.filter((l) => l === "").length;
+  // A blank after nearly every line means each line was its own block, not stanza breaks (those are lost there anyway).
+  return (blanks * 2 >= region.length - 1 ? region.filter((l) => l !== "") : region).join("\n").trim();
 }
 
 const blocked = new BlockList();

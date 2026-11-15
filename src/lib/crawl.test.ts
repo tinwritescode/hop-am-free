@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractPage, isBlockedAddress } from "./crawl";
+import { chordSheetRegion, extractPage, isBlockedAddress } from "./crawl";
 
 const html = `<!doctype html><html><head><title>Hợp âm Nó - Thắng</title>
 <meta property="og:description" content="Nó như thế [Am]này">
@@ -28,6 +28,47 @@ describe("extractPage", () => {
 
   it("has no blank-line runs", () => {
     expect(page.text).not.toMatch(/\n\s*\n\s*\n/);
+  });
+});
+
+describe("chordSheetRegion", () => {
+  const text = [
+    "Đăng nhập",
+    "Tình bạn diệu kỳ",
+    "Capo 2",
+    "Amee",
+    "Ta đã [G]hứa bên nhau, những năm [D]tháng nhọc nhằn",
+    "You make [F#]me feel like, I got [Bm]everything.",
+    "Ricky Star",
+    "[G] Trôi đi trôi đi",
+    "[D] nuôi ta khôn lên",
+    "[G] [D] [F#] [Bm]",
+    "Danh sách hợp âm",
+    "Bài liên quan",
+  ].join("\n");
+
+  it("keeps the lines from the first chord line to the last, labels between them included", () => {
+    expect(chordSheetRegion(text)).toBe(
+      ["Ta đã [G]hứa bên nhau, những năm [D]tháng nhọc nhằn", "You make [F#]me feel like, I got [Bm]everything.", "Ricky Star", "[G] Trôi đi trôi đi", "[D] nuôi ta khôn lên", "[G] [D] [F#] [Bm]"].join("\n"),
+    );
+  });
+
+  it("undoes double spacing from pages that put every line in its own block", () => {
+    const spaced = ["Menu", "", "[G]Một", "", "[D]Hai", "", "Ricky Star", "", "[Em]Ba", "", "[C]Bốn", "", "Bài liên quan"].join("\n");
+    expect(chordSheetRegion(spaced)).toBe(["[G]Một", "[D]Hai", "Ricky Star", "[Em]Ba", "[C]Bốn"].join("\n"));
+  });
+
+  it("keeps stanza breaks on pages that only leave blank lines between stanzas", () => {
+    const stanzas = ["[G]Một", "[D]Hai", "", "[Em]Ba", "[C]Bốn"].join("\n");
+    expect(chordSheetRegion(stanzas)).toBe(stanzas);
+  });
+
+  it("is null when the page has too few [chord] lines to be a sheet", () => {
+    expect(chordSheetRegion("Hợp âm [Am] là gì?\nMenu\n[C] trưởng")).toBeNull();
+  });
+
+  it("ignores bracketed words that are not chords", () => {
+    expect(chordSheetRegion("[Verse]\n[Chorus]\n[Intro]\n[Outro]\n[Bridge]")).toBeNull();
   });
 });
 

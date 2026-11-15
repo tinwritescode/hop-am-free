@@ -2,12 +2,17 @@
 
 import { useState, useTransition } from "react";
 import { z } from "zod";
-import { SongDraftSchema, unknownChords, type SongDraft } from "@/lib/song";
+import { LooseDraftSchema } from "@/lib/import-job";
+import { unknownChords, type SongDraft } from "@/lib/song";
 import { Mascot } from "@/components/Mascot";
 import { CapoSelect } from "@/components/song/CapoSelect";
 import { createSongAction } from "./actions";
 
-const ImportResponse = z.union([z.object({ draft: SongDraftSchema, unknownChords: z.array(z.string()) }), z.object({ error: z.string() })]);
+const ImportResponse = z.union([
+  // A draft with a warning is unfinished (see InvalidDraftError), so it is read without the save rules.
+  z.object({ draft: LooseDraftSchema, unknownChords: z.array(z.string()), warning: z.string().optional() }),
+  z.object({ error: z.string() }),
+]);
 
 const EMPTY: SongDraft = { title: "", artist: "", composer: "", key: "", genre: "", rhythm: "", sheet: "", sourceUrl: null, capo: null };
 const FIELDS: { name: "title" | "artist" | "composer" | "key" | "genre" | "rhythm"; label: string; placeholder: string }[] = [
@@ -20,9 +25,10 @@ const FIELDS: { name: "title" | "artist" | "composer" | "key" | "genre" | "rhyth
 ];
 const input = "h-11 w-full rounded-md border border-line-strong bg-surface px-4 text-[15px] text-ink focus:border-link";
 
-export function SongForm() {
-  const [draft, setDraft] = useState<SongDraft>(EMPTY);
-  const [url, setUrl] = useState("");
+/** `initial` pre-fills a draft a queued import held back for review. */
+export function SongForm({ initial }: { initial?: SongDraft }) {
+  const [draft, setDraft] = useState<SongDraft>(initial ?? EMPTY);
+  const [url, setUrl] = useState(initial?.sourceUrl ?? "");
   const [importing, setImporting] = useState(false);
   const [note, setNote] = useState<{ tone: "info" | "error"; text: string } | null>(null);
   const [saving, startSaving] = useTransition();
@@ -38,7 +44,7 @@ export function SongForm() {
       );
       if ("error" in res) return setNote({ tone: "error", text: res.error });
       setDraft(res.draft);
-      setNote({ tone: "info", text: "Đã điền sẵn từ link. Xem lại rồi bấm Lưu bài." });
+      setNote(res.warning ? { tone: "error", text: `${res.warning}. Sửa lại rồi bấm Lưu bài.` } : { tone: "info", text: "Đã điền sẵn từ link. Xem lại rồi bấm Lưu bài." });
     } catch {
       setNote({ tone: "error", text: "Import không thành công, thử lại nhé." });
     } finally {
