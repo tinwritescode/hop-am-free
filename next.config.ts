@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   htmlLimitedBots: /.*/,
   // Loaded by Node at runtime instead of bundled; pnpm does not hoist its `pg` dependency for the bundler.
   serverExternalPackages: ["pg-boss"],
+  // The shared package ships TypeScript source.
+  transpilePackages: ["@hopamfree/core"],
 };
 
 export default nextConfig;

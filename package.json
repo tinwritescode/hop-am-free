@@ -18,6 +18,7 @@
     "lottie": "tsx --tsconfig scripts/tsconfig.lottie.json scripts/lottie.mts"
   },
   "dependencies": {
+    "@hopamfree/core": "workspace:*",
     "@tombatossals/chords-db": "^0.5.1",
     "@workos-inc/authkit-nextjs": "^4.6.3",
     "@workos-inc/node": "^12.2.0",

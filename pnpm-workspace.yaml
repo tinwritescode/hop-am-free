@@ -1,3 +1,6 @@
+packages:
+  - apps/*
+  - packages/*
 # esbuild downloads its platform binary on install (used by tsx, vitest, drizzle-kit).
 allowBuilds:
   esbuild: true

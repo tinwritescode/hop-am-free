@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseChordSheet } from "./chordsheet";
+import { parseChordSheet } from "@hopamfree/core/chordsheet";
 import { artistsOf, artistTone, commonChords, easySongs, firstLyricLine, homeSections, initialOf, isPlayable, sortSongs, summarize, tally, type SongSummary } from "./catalog";
 
 const song = ({ slug, title, artist = "Ca sĩ", key = "C", rhythm = "", raw = "[C] la" }: { slug: string; title: string; artist?: string; key?: string; rhythm?: string; raw?: string }) =>

@@ -1,7 +1,7 @@
 // Search and share metadata: canonical links, Open Graph / Twitter cards, the per-song share image's content, JSON-LD.
 import type { Metadata } from "next";
 import { statedFret } from "./capo";
-import { chordsInOrder } from "./chordsheet";
+import { chordsInOrder } from "@hopamfree/core/chordsheet";
 import { voicingsFor, type Position } from "./chords";
 import type { Song } from "./song";
 

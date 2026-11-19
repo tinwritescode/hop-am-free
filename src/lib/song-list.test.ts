@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseChordSheet } from "./chordsheet";
+import { parseChordSheet } from "@hopamfree/core/chordsheet";
 import { summarize } from "./catalog";
 import { clearedHref, DEFAULT_QUERY, indexableListHref, inPageListHref, listTitle, isSongPath, legacySearchRedirect, listHref, listSongs, PAGE_SIZE, pageItems, parseListQuery, type ListQuery } from "./song-list";
 

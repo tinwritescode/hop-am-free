@@ -5,7 +5,7 @@ import { z } from "zod";
 import { cached } from "@/db/cache";
 import type { Song, SongDraft } from "./song";
 import { SongDraftSchema } from "./song";
-import { chordsInOrder, sheetForPrompt } from "./chordsheet";
+import { chordsInOrder, sheetForPrompt } from "@hopamfree/core/chordsheet";
 import { DIFFICULTY_LABEL, difficultyOf, voicingsFor } from "./chords";
 import { AiResultSchema, parseAiOutput, type AiResult, type AiTask } from "./ai-schema";
 import { RhythmSuggestionsSchema, STROKES, TIME_SIGNATURES, type RhythmSuggestion } from "./rhythm";

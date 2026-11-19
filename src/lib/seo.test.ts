@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseChordSheet } from "./chordsheet";
+import { parseChordSheet } from "@hopamfree/core/chordsheet";
 import { breadcrumbJsonLd, cardVersion, pageMeta, SITE_OG_PATH, songCard, songDescription, songOgPath } from "./seo";
 
 const song = (patch: Partial<Parameters<typeof songCard>[0]> = {}) => ({

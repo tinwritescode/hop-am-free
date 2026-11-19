@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseChordSheet } from "./chordsheet";
+import { parseChordSheet } from "@hopamfree/core/chordsheet";
 import { parseAiOutput } from "./ai-schema";
 
 const sheet = parseChordSheet("Để nó [C] đến như lẽ đương [G] nhiên\n[Bb] Và để [Ab] gió");

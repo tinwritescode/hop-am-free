@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { chordsInOrder, parseChordSheet, type ChordSheet } from "./chordsheet";
+import { chordsInOrder, parseChordSheet, type ChordSheet } from "@hopamfree/core/chordsheet";
 import { lookupChord } from "./chords";
 import { capoColumns, capoFromColumns, CapoDraftSchema, type Capo, type CapoColumns } from "./capo";
 import { fold } from "./text";

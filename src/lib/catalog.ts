@@ -1,5 +1,5 @@
 // Song summaries for the home page and the /bai-hat list: one compact row per song, plus the home page's picks.
-import { chordsInOrder, type ChordSheet, type Token } from "./chordsheet";
+import { chordsInOrder, type ChordSheet, type Token } from "@hopamfree/core/chordsheet";
 import type { Song } from "./song";
 import { fold } from "./text";
 
