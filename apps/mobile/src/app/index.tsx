@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { Link } from "expo-router";
+import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useSongs } from "../api";
 import { fonts, useColors, type Colors } from "../theme";
@@ -49,21 +49,23 @@ export default function SongList() {
           }
           ListEmptyComponent={<Text style={styles.empty}>Chưa có bài nào khớp “{query}”. Thử tên ca sĩ, hoặc gõ không dấu.</Text>}
           renderItem={({ item }) => (
-            <Link href={{ pathname: "/bai-hat/[slug]", params: { slug: item.slug } }} asChild>
-              <Pressable style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-                <View style={styles.rowText}>
-                  <Text style={styles.title} numberOfLines={1}>
-                    {item.title}
-                  </Text>
-                  <Text style={styles.artist} numberOfLines={1}>
-                    {item.artist}
-                  </Text>
-                </View>
-                <Text style={styles.key} accessibilityLabel={`Tone ${item.key}`}>
-                  {item.key}
+            <Pressable
+              onPress={() => router.push({ pathname: "/bai-hat/[slug]", params: { slug: item.slug } })}
+              style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+              accessibilityRole="link"
+            >
+              <View style={styles.rowText}>
+                <Text style={styles.title} numberOfLines={1}>
+                  {item.title}
                 </Text>
-              </Pressable>
-            </Link>
+                <Text style={styles.artist} numberOfLines={1}>
+                  {item.artist}
+                </Text>
+              </View>
+              <Text style={styles.key} accessibilityLabel={`Tone ${item.key}`}>
+                {item.key}
+              </Text>
+            </Pressable>
           )}
         />
       )}
