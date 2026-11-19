@@ -5,7 +5,7 @@ import { db } from ".";
 import { songs } from "./schema";
 import { slugify, songColumns, toSong, type Song, type SongDraft } from "@/lib/song";
 import { chordsInOrder } from "@hopamfree/core/chordsheet";
-import { fold } from "@/lib/text";
+import { fold } from "@hopamfree/core/text";
 import { summarize, type SongSummary } from "@/lib/catalog";
 import { cachedCatalog, cachedSongRow } from "./read-cache";
 

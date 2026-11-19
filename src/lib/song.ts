@@ -2,7 +2,7 @@ import { z } from "zod";
 import { chordsInOrder, parseChordSheet, type ChordSheet } from "@hopamfree/core/chordsheet";
 import { lookupChord } from "@hopamfree/core/chords";
 import { capoColumns, capoFromColumns, CapoDraftSchema, type Capo, type CapoColumns } from "./capo";
-import { fold } from "./text";
+import { fold } from "@hopamfree/core/text";
 
 /** What an admin fills in (or an import pre-fills) to create a song. */
 export const SongDraftSchema = z.object({

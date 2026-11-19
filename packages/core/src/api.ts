@@ -14,3 +14,11 @@ export const SongDetailSchema = SongListItemSchema.extend({
   sheet: z.string(),
 });
 export type SongDetail = z.infer<typeof SongDetailSchema>;
+
+/** Every song in one response, so the app searches by title or singer on the phone. */
+export const CatalogSchema = z.object({
+  songs: z.array(SongListItemSchema.extend({ artists: z.array(z.string()) })),
+  /** Each singer with their song count, most songs first. */
+  artists: z.array(z.object({ name: z.string(), count: z.int() })),
+});
+export type Catalog = z.infer<typeof CatalogSchema>;

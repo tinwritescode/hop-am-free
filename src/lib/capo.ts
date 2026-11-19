@@ -1,7 +1,7 @@
 // Capo (kẹp capo): the fret the capo sits on, and who said so. AI estimates are kept apart so the site never shows them as fact.
 import { z } from "zod";
 import { transposeKey } from "@hopamfree/core/chords";
-import { fold } from "./text";
+import { fold } from "@hopamfree/core/text";
 
 /** sheet: the source sheet or page states it. ai: a model's estimate. editor: an admin or the importing agent set it. */
 export const CAPO_SOURCES = ["sheet", "ai", "editor"] as const;

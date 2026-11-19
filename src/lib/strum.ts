@@ -1,6 +1,6 @@
 // A small strum picture for a rhythm (điệu) tile. Decorative: the common pattern people learn for that name,
 // not the song's exact rhythm (the song page has the AI's playable patterns).
-import { fold } from "./text";
+import { fold } from "@hopamfree/core/text";
 
 // Checked in order: the more specific name first ("slow rock" before "slow").
 const PATTERNS: [RegExp, string][] = [

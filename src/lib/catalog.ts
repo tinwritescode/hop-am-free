@@ -1,7 +1,7 @@
 // Song summaries for the home page and the /bai-hat list: one compact row per song, plus the home page's picks.
 import { chordsInOrder, type ChordSheet, type Token } from "@hopamfree/core/chordsheet";
 import type { Song } from "./song";
-import { fold } from "./text";
+import { fold } from "@hopamfree/core/text";
 
 export type SongSummary = Pick<Song, "slug" | "title" | "artist" | "key" | "rhythm"> & {
   /** Each singer on their own (see artistsOf); `artist` keeps the text as stored, for display. */
