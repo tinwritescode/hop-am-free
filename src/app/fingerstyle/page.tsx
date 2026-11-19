@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHeading } from "@/components/site/PageHeading";
 import { FINGERSTYLE_PATH, SONGS } from "@/fingerstyle";
-import { DIFFICULTY_LABEL } from "@/lib/chords";
+import { DIFFICULTY_LABEL } from "@hopamfree/core/chords";
 
 export const metadata: Metadata = {
   title: "Học fingerstyle guitar",

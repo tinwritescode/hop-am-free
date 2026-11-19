@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Mascot } from "@/components/Mascot";
 import { strum } from "@/lib/audio";
-import { NOTES } from "@/lib/chords";
+import { NOTES } from "@hopamfree/core/chords";
 import { listenPitch } from "@/lib/mic";
 import { sfx } from "@/lib/sfx";
 import { centsOff, median, nearestString, TUNINGS, verdict, type Tuning } from "@/lib/tuner";

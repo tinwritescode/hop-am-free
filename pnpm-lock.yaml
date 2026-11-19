@@ -169,9 +169,6 @@ importers:
       '@hopamfree/core':
         specifier: workspace:*
         version: link:packages/core
-      '@tombatossals/chords-db':
-        specifier: ^0.5.1
-        version: 0.5.1
       '@workos-inc/authkit-nextjs':
         specifier: ^4.6.3
         version: 4.6.3(@workos-inc/node@12.2.0)(next@15.5.29(@babel/core@7.29.13(supports-color@7.2.0))(@opentelemetry/api@1.10.0)(@types/node@20.19.43)(babel-plugin-react-compiler@1.0.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0))(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.9.3)
@@ -312,6 +309,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@tombatossals/chords-db':
+        specifier: ^0.5.1
+        version: 0.5.1
       zod:
         specifier: ^4.6.7
         version: 4.6.7

@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@hopamfree/core": "workspace:*",
-    "@tombatossals/chords-db": "^0.5.1",
     "@workos-inc/authkit-nextjs": "^4.6.3",
     "@workos-inc/node": "^12.2.0",
     "cheerio": "^1.2.0",

@@ -1,7 +1,7 @@
 import { load } from "cheerio";
 import { lookup } from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
-import { lookupChord } from "./chords";
+import { lookupChord } from "@hopamfree/core/chords";
 
 const MAX_TEXT = 20_000;
 const MAX_BYTES = 3_000_000;

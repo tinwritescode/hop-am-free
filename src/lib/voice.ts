@@ -1,6 +1,6 @@
 // Hearing the visitor's voice: the pitch of a short slice of microphone sound, the range they sang, and the key that
 // suits it. All of it is an estimate; the page says so.
-import { NOTES } from "./chords";
+import { NOTES } from "@hopamfree/core/chords";
 
 const MIN_HZ = 70; // below a low bass voice
 const MAX_HZ = 1000; // above a high soprano

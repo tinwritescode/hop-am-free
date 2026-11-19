@@ -5,7 +5,7 @@ import type { Song } from "@/lib/song";
 import type { SongRhythm } from "@/lib/rhythm";
 import type { Settings } from "@/lib/settings";
 import { applyFixes, chordsInOrder, type Line, type LineFix } from "@hopamfree/core/chordsheet";
-import { midiOf, rootPitchClass, transposeChord, transposeKey, voicingsFor } from "@/lib/chords";
+import { midiOf, rootPitchClass, transposeChord, transposeKey, voicingsFor } from "@hopamfree/core/chords";
 import { capoForTranspose, soundingKey, type Capo } from "@/lib/capo";
 import { AI_CAPO_NOTE, CapoBadge } from "./CapoBadge";
 import type { ReviewIssue, Substitution } from "@/lib/ai-schema";

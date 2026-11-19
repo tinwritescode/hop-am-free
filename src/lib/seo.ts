@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { statedFret } from "./capo";
 import { chordsInOrder } from "@hopamfree/core/chordsheet";
-import { voicingsFor, type Position } from "./chords";
+import { voicingsFor, type Position } from "@hopamfree/core/chords";
 import type { Song } from "./song";
 
 export const SITE_NAME = "Hợp Âm Free";

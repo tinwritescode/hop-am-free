@@ -3,7 +3,7 @@
 import { ChordDiagram } from "@/components/ChordDiagram";
 import { playEffect } from "@/components/fx/playEffect";
 import { Mascot } from "@/components/Mascot";
-import { DIFFICULTY_LABEL, difficultyOf, handHint, midiOf, tabOf, type Difficulty, type Position } from "@/lib/chords";
+import { DIFFICULTY_LABEL, difficultyOf, handHint, midiOf, tabOf, type Difficulty, type Position } from "@hopamfree/core/chords";
 import type { Substitution, TourStep } from "@/lib/ai-schema";
 import { strum } from "@/lib/audio";
 import { sfx } from "@/lib/sfx";

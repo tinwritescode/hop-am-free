@@ -1,7 +1,7 @@
 // The 1200×630 share images, drawn by next/og (Satori): inline styles only, and every box with several children is a flex box.
 // Satori renders <svg> without fonts, so all text sits in HTML around the drawings.
 import { MascotArt } from "@/components/MascotArt";
-import { barreRanges, type Position } from "@/lib/chords";
+import { barreRanges, type Position } from "@hopamfree/core/chords";
 import { SITE_NAME, type SongCard } from "@/lib/seo";
 import { hoian } from "@/themes/hoian";
 

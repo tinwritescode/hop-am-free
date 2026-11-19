@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Mascot } from "@/components/Mascot";
-import { transposeKey } from "@/lib/chords";
+import { transposeKey } from "@hopamfree/core/chords";
 import { listenPitch } from "@/lib/mic";
 import { sfx } from "@/lib/sfx";
 import { hzToMidi, midiName, suggestShift, voiceRange, type VoiceRange } from "@/lib/voice";

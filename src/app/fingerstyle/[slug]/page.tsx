@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Player } from "@/components/fingerstyle/Player";
 import { TabLegend } from "@/components/fingerstyle/TabLegend";
 import { arrangementOf, FINGERSTYLE_PATH, SONGS, songBySlug } from "@/fingerstyle";
-import { DIFFICULTY_LABEL } from "@/lib/chords";
+import { DIFFICULTY_LABEL } from "@hopamfree/core/chords";
 import { parseTab } from "@/lib/tab/parse";
 import { TUNINGS } from "@/lib/tuner";
 

@@ -1,6 +1,6 @@
 // The fingerstyle lessons: songs, each with one or more arrangements written as text tab.
 // Adding a song = one file in ./songs plus a line in SONGS; adding a variant = one more entry in `arrangements`.
-import type { Difficulty } from "@/lib/chords";
+import type { Difficulty } from "@hopamfree/core/chords";
 import type { Tuning } from "@/lib/tuner";
 import { badGuy } from "./songs/bad-guy";
 

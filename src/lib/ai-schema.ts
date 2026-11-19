@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { chordsInOrder, type ChordSheet } from "@hopamfree/core/chordsheet";
-import { lookupChord } from "./chords";
+import { lookupChord } from "@hopamfree/core/chords";
 
 export const AI_TASKS = ["tour", "review", "easy", "rich"] as const;
 export type AiTask = (typeof AI_TASKS)[number];
