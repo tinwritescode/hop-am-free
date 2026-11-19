@@ -29,7 +29,7 @@ export function Status({ error, onRetry }: { error?: string; onRetry: () => void
 }
 
 const styles = StyleSheet.create({
-  bar: { paddingBottom: 16, borderBottomWidth: 3 },
+  bar: { paddingBottom: 12, borderBottomWidth: 3 },
   status: { marginTop: 56, paddingHorizontal: 32, alignItems: "center", gap: 16 },
   message: { fontFamily: fonts.body, fontSize: 16, lineHeight: 24, textAlign: "center" },
   button: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 999 },
