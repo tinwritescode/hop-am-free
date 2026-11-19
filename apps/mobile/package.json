@@ -8,6 +8,7 @@
     "@hopamfree/core": "workspace:*",
     "expo": "~58.0.26",
     "expo-constants": "~58.0.16",
+    "expo-dev-client": "~58.0.21",
     "expo-font": "~58.0.12",
     "expo-keep-awake": "~58.0.4",
     "expo-linking": "~58.0.17",
@@ -24,9 +25,9 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --dev-client",
     "android": "expo run:android",
-    "ios": "expo run:ios",
+    "ios": "expo run:ios --device",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit"
   },
