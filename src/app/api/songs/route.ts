@@ -1,3 +1,4 @@
+import type { SongListResponse } from "@hopamfree/core/api";
 import { requestUser } from "@/db/auth";
 import { publishSong } from "@/db/publish";
 import { searchSongs } from "@/db/songs";
@@ -8,7 +9,7 @@ export async function GET(req: Request) {
   const songs = await searchSongs(q);
   return Response.json({
     songs: songs.slice(0, 50).map((s) => ({ slug: s.slug, title: s.title, artist: s.artist, key: s.key, sourceUrl: s.sourceUrl, path: `/bai-hat/${s.slug}` })),
-  });
+  } satisfies SongListResponse);
 }
 
 export async function POST(req: Request) {
