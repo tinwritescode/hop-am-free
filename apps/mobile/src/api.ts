@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { SongDetailSchema, SongListResponseSchema, type SongDetail, type SongListItem } from "@hopamfree/core/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CatalogSchema, SongDetailSchema, type Catalog, type SongDetail } from "@hopamfree/core/api";
 import type { z } from "zod";
 
 // EXPO_PUBLIC_API_URL points a dev build at a local server (e.g. http://localhost:3000).
@@ -16,29 +16,41 @@ async function getJson<T>({ path, schema }: { path: string; schema: z.ZodType<T>
   return schema.parse(await res.json());
 }
 
-/** Loads `path` whenever it changes or `retry` is called; a stale response never overwrites a newer one. */
-function useRemote<T>({ path, schema }: { path: string; schema: z.ZodType<T> }): [Remote<T>, () => void] {
+/** Runs `load` whenever `key` changes or `retry` is called; a stale response never overwrites a newer one. */
+function useRemote<T>({ key, load }: { key: string; load: () => Promise<T> }): [Remote<T>, () => void] {
   const [state, setState] = useState<Remote<T>>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
+  // `load` is rebuilt each render; `key` says when it asks for something else.
+  const latestLoad = useRef(load);
+  latestLoad.current = load;
   useEffect(() => {
     let live = true;
     setState({ kind: "loading" });
-    getJson({ path, schema }).then(
+    latestLoad.current().then(
       (data) => live && setState({ kind: "ok", data }),
       (err: unknown) => live && setState({ kind: "error", message: err instanceof Error ? err.message : "Không tải được." }),
     );
     return () => {
       live = false;
     };
-  }, [path, schema, attempt]);
+  }, [key, attempt]);
   return [state, useCallback(() => setAttempt((n) => n + 1), [])];
 }
 
-export function useSongs(query: string): [Remote<SongListItem[]>, () => void] {
-  const [remote, retry] = useRemote({ path: `/api/songs?q=${encodeURIComponent(query)}`, schema: SongListResponseSchema });
-  return [remote.kind === "ok" ? { kind: "ok", data: remote.data.songs } : remote, retry];
+// One download per app session, shared by the song list and every singer's page; a failure is not cached.
+let catalog: Promise<Catalog> | null = null;
+function loadCatalog(): Promise<Catalog> {
+  catalog ??= getJson({ path: "/api/catalog", schema: CatalogSchema }).catch((err: unknown) => {
+    catalog = null;
+    throw err;
+  });
+  return catalog;
+}
+
+export function useCatalog(): [Remote<Catalog>, () => void] {
+  return useRemote({ key: "catalog", load: loadCatalog });
 }
 
 export function useSong(slug: string): [Remote<SongDetail>, () => void] {
-  return useRemote({ path: `/api/songs/${encodeURIComponent(slug)}`, schema: SongDetailSchema });
+  return useRemote({ key: slug, load: () => getJson({ path: `/api/songs/${encodeURIComponent(slug)}`, schema: SongDetailSchema }) });
 }
